@@ -1,8 +1,8 @@
 -module(day09_2).
 -export([solve/1]).
 
-% 00:02:42 - Čia net per lengva kaip antrai daliai. Didžiąją laiko dalį užėmė kopijavimas. Pakeisti tereikėjo vieną eilutę.
-%            Pasirodo, teisingas atsakymas gaunasi ir tiesiog nuėmus "reverse" iš pirmos dalies get_values/1 funkcijos. Čia įdomi matematinė užduotis tą įrodyti :-D
+% Čia net per lengva kaip antrai daliai. Didžiąją laiko dalį užėmė kopijavimas. Pakeisti tereikėjo vieną eilutę.
+% Pasirodo, teisingas atsakymas gaunasi ir tiesiog nuėmus "reverse" iš pirmos dalies get_values/1 funkcijos. Čia įdomi matematinė užduotis tą įrodyti :-D
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

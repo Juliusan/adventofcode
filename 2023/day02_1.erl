@@ -1,7 +1,7 @@
 -module(day02_1).
 -export([solve/2]).
 
-% 00:42:12 - Nieko mandro. Užtruko kodinimas.
+% Nieko mandro. Užtruko kodinimas.
 %
 % 53> c(day02_1).                                    
 % {ok,day02_1}

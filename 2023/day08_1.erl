@@ -1,7 +1,7 @@
 -module(day08_1).
 -export([solve/1]).
 
-% 00:31:24 - Nesudėtinga. Tik programavimas. Neprižiūrėjau, kad pradėti visada reikia AAA, o baigti ZZZ, gavau (turbūt) amžiną ciklą.
+% Nesudėtinga. Tik programavimas. Neprižiūrėjau, kad pradėti visada reikia AAA, o baigti ZZZ, gavau (turbūt) amžiną ciklą.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

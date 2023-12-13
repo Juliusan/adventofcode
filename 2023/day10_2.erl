@@ -1,10 +1,10 @@
 -module(day10_2).
 -export([solve/1]).
 
-% 01:46:00 - Privertė pamąstyti. Perskaitęs užduotį pamaniau - neįmanom! Tada pradėjau galvoti, sumąsčiau algoritmą, bet jis buvo
-%            per daug paprastas ir neteisingas. Pamąsčiau dar, sumąsčiąu gerą algoritmą, bet jau neturėjau laiko toliau sėdėti.
-%            Tai buvo maždaug pusiaukelė. Po pertraukos vėl prisėdau, suprogramavau ir viskas veikė. Buvau trečias savo leader boarde
-%            tą išsprendęs (https://adventofcode.com/2023/leaderboard/private/view/438010?order=local_score).
+% Privertė pamąstyti. Perskaitęs užduotį pamaniau - neįmanoma! Tada pradėjau galvoti, sumąsčiau algoritmą, bet jis buvo
+% per daug paprastas ir neteisingas. Pamąsčiau dar, sumąsčiąu gerą algoritmą, bet jau neturėjau laiko toliau sėdėti.
+% Tai buvo maždaug pusiaukelė. Po pertraukos vėl prisėdau, suprogramavau ir viskas veikė. Buvau trečias savo leader boarde
+% tą išsprendęs (https://adventofcode.com/2023/leaderboard/private/view/438010?order=local_score).
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

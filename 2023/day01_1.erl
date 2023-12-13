@@ -1,7 +1,7 @@
 -module(day01_1).
 -export([solve/1]).
 
-% 00:31:57 - Daugiausia kovojau su Erlango skaitymu iš failo ir išvedimu į ekraną.
+% Daugiausia kovojau su Erlango skaitymu iš failo ir išvedimu į ekraną.
 %
 % 38> c(day01_1).                     
 % {ok,day01_1}

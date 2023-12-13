@@ -1,7 +1,7 @@
 -module(day07_2).
 -export([solve/1]).
 
-% 00:13:04 - Nesudėtinga. Nesunkiai sugalvojau, kaip perdaryti.
+% Nesudėtinga. Nesunkiai sugalvojau, kaip perdaryti.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

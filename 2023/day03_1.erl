@@ -1,7 +1,7 @@
 -module(day03_1).
 -export([solve/1]).
 
-% 00:39:44 - Kreivas uždavinys, bet išsprendžiau be didelių problemų
+% Kreivas uždavinys, bet išsprendžiau be didelių problemų
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

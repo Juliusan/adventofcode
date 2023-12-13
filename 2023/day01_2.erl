@@ -1,7 +1,7 @@
 -module(day01_2).
 -export([solve/1]).
 
-% 0:20:35 - užstrigau su "eightwo" gale
+% Užstrigau su "eightwo" gale
 %
 % 69> c(day01_2).                   
 % {ok,day01_2}

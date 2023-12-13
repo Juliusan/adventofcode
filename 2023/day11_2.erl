@@ -1,7 +1,7 @@
 -module(day11_2).
 -export([solve/2]).
 
-% 00:03:17 - Nesudėtinga. Iš viso nėra ką veikti.
+% Nesudėtinga. Iš viso nėra ką veikti.
 %
 % 24> day11_2:solve("day11-PVZ.txt", 10).
 % 1030

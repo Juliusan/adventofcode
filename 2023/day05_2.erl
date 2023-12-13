@@ -1,7 +1,7 @@
 -module(day05_2).
 -export([solve/1]).
 
-% apie 2h - iš pradžių galvojau, kad bus trivialu, padariau, praėjo testinį pavyzdį, o tada nulaužiau kompą darydamas realų.
+% Iš pradžių galvojau, kad bus trivialu, padariau, praėjo testinį pavyzdį, o tada nulaužiau kompą darydamas realų.
 % Out of memory - nes bandžiau kelis milijardus skaičių surašyti į vieną listą. Teko daryti ne taip atminčiai alkaną variantą.
 % Na ir įklimpau. Bandžiau daryti labai gudrų algoritmą ir labai painiojausi... Na bent jau gera smegenų mankšta buvo.
 

@@ -1,7 +1,7 @@
 -module(day03_2).
 -export([solve/1]).
 
-% 0:27:07 - Irgi tik sprendimas. Padariau vieną kvailą klaidą, bet didelių strigimų nebuvo.
+% Irgi tik sprendimas. Padariau vieną kvailą klaidą, bet didelių strigimų nebuvo.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

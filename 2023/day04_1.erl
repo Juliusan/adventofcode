@@ -1,7 +1,7 @@
 -module(day04_1).
 -export([solve/1]).
 
-% ~19 minučių - labai lengva.
+% Labai lengva.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

@@ -1,7 +1,7 @@
 -module(day02_2).
 -export([solve/1]).
 
-% 00:07:22 - Irgi nieko mandro. Paprastas pakeitimas.
+% Irgi nieko mandro. Paprastas pakeitimas.
 %
 %60> c(day02_2).                      
 %{ok,day02_2}

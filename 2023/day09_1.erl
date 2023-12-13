@@ -1,7 +1,7 @@
 -module(day09_1).
 -export([solve/1]).
 
-% 00:20:08 - Nesudėtinga. Tik programavimas.
+% Nesudėtinga. Tik programavimas.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

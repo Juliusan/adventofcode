@@ -1,7 +1,7 @@
 -module(day04_2).
 -export([solve/1]).
 
-% 0:21:18 - kiek sunkesnė, nei pirma dalis, bet gavosi be didelių problemų.
+% Kiek sunkesnė, nei pirma dalis, bet gavosi be didelių problemų.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),

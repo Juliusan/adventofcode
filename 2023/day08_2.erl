@@ -1,9 +1,9 @@
 -module(day08_2).
 -export([solve/1]).
 
-% 00:31:20 - Nesudėtinga. Tik antrą kartą užsiroviau ant uždavinio dydžio. Bandžiau daryti kaip užduotyje: visus kelius privesti iki galo bendrai.
-%            Turėjau tokį kodą (užkomentuotas). Pasirodo, net erlangui ne taip lengva iki 17 tūkstančių milijardų suskaičiuoti. Taigi, užtruko perrašyti.
-%            Ir, pasirodo, mano algoritmas turi prielaidą (kurios sąlygoje nebuvo), kad jeigu yra kelias iš __A į __Z, tai kitas žingznis po __Z bus būtent viršūnė __A.
+% Nesudėtinga. Tik antrą kartą užsiroviau ant uždavinio dydžio. Bandžiau daryti kaip užduotyje: visus kelius privesti iki galo bendrai.
+% Turėjau tokį kodą (užkomentuotas). Pasirodo, net erlangui ne taip lengva iki 17 tūkstančių milijardų suskaičiuoti. Taigi, užtruko perrašyti.
+% Ir, pasirodo, mano algoritmas turi prielaidą (kurios sąlygoje nebuvo), kad jeigu yra kelias iš __A į __Z, tai kitas žingznis po __Z bus būtent viršūnė __A.
 
 solve(FileName) ->
     {ok, File} = file:open(FileName, [read]),
