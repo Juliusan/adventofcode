@@ -1,7 +1,18 @@
 -module(day13_2).
 -export([solve/1]).
 
-% Nesudėtinga. Tik programavimas.
+% Nesudėtingas, bet painus. Susipainiojau pats, tada dar labiau susipainiojau. Galiausiai įstrigau,
+% nes viską skaičiuodavo, rezultatą gaudavo (bet neteisingą), pavyzdžius praeidavo, bet negalėjau
+% surasti, kurį (kuriuos) žemėlapį skaičiuoja blogai. Supratau, kad nepatikrinu to, kad simetrijos
+% ašis turi būtinai būti kita. Puoliau greitai taisyti tai vienur, tai kitur, nieko nesigavo ir
+% užstrigau mirtinai. Net Rimo paprašiau kad suskaičiuotų man kiekvieno žemėlapio naująją simetriją
+% (jis už mane anksčiau baigė), bet vis dėl to neprireikė. Galiausiai kitą dieną atsisėdau, dar kartą
+% įdėmiai perskaičiau sąlygą, pasitikrinau, kad visi pradiniai žemėlapiai turi tik vieną simetrijos
+% ašį, tada tvarkingai perrašiau kodą (na, sąlyginai tvarkingai, nes laikrodis tai tiksėjo), padariau,
+% kad nulūžtų, jeigu negauna gero atsakymo, išnagrinėjau (padedant LibreOffice Calc) kelis pavyzdžius,
+% su kuriais programa lūždavo, ištaisiau klaidas ir gavau gerą atsakymą. Valio! Pasirodo, problema
+% buvo ta, kad jeigu simetrijos ašis būdavo tokio pat tipo (vertikali/horizontali), bet toliau nuo
+% priekio, negu originalioji, tai jos tiesiog nerasdavo. Na iš tiesų ne taip sunku buvo.
 
 solve(FileName) ->
     Maps = get_maps(FileName),
@@ -38,6 +49,24 @@ get_map(File, AccMap) ->
     end.
 
 
+%count_result_maps([]) -> ok;
+    
+%count_result_maps([Map|Maps]) ->
+%    Hor = count_single(Map),
+%    MapT = transpose(Map),
+%    Ver = count_single(MapT),
+%    Res = case {Hor, Ver} of
+%        {[] , [] } -> "FALSE";
+%        {[] , [_]} -> "OK   ";
+%        {[] , _  } -> "LIST2";
+%        {[_], [] } -> "OK   ";
+%        {_  , [] } -> "LIST1";
+%        {_  , _  } -> "BOTH!"
+%    end,
+%    io:fwrite("XXX ~s: ~p ~p~n", [Res, Hor, Ver]),
+%    count_result_maps(Maps).
+    
+
 count_result_maps(Maps) ->
     count_result_maps(Maps, 0).
     
@@ -48,17 +77,23 @@ count_result_maps([Map | Maps], AccResult) ->
     %io:fwrite("VVVVVVVVVVVVVVVVVV~n"),
     %print_map(Map),
     %io:fwrite("AAAAAAAAAAAAAAAAAA~n"),
-    Result = count_result(Map),
+    Result = case count_result(Map) of
+        {hor, Count} -> 100*Count;
+        {ver, Count} -> Count
+    end,
     count_result_maps(Maps, Result + AccResult).
     
     
 count_result(Map) ->
-    OrigCount = count_single(Map),
+    OrigCount = count_single(Map, undefined),
+    %io:fwrite("XXX ORIG ~p~n", [OrigCount]),
     case count_result_with_fix(Map, 0, Map, OrigCount, false) of
         false ->
+            %io:fwrite("XXX HORIZONTAL FALSE~n"),
             MapT = transpose(Map),
             count_result_with_fix(MapT, 0, MapT, OrigCount, true);
         Count ->
+            %io:fwrite("XXX HORIZONTAL ~p~n", [Count]),
             Count
     end.
 
@@ -73,75 +108,103 @@ count_result_with_fix([Line1, Second | Map], Index, AllMap, OrigCount, IsTranspo
     end.
 
 count_result_with_fix(_Line1, [], _Index1, _Index2, _AllMap, _OrigCount, _IsTransposed) ->
-    io:fwrite("XXX ~p ~p EMPTY~n", [_Index1, _Index2]),
+%    io:fwrite("XXX ~p ~p EMPTY~n", [_Index1, _Index2]),
     false;
     
 count_result_with_fix(Line1, [Line2 | Map], Index1, Index2, AllMap, OrigCount, IsTransposed) ->
-    io:fwrite("XXX ~p ~p~n", [Index1, Index2]),
+%    io:fwrite("XXX ~p ~p~n", [Index1, Index2]),
     case fix_line(Line1, Line2) of
         false ->
             count_result_with_fix(Line1, Map, Index1, Index2+1, AllMap, OrigCount, IsTransposed); 
-        undefined ->
-            count_result_with_fix(Line1, Map, Index1, Index2+1, AllMap, OrigCount, IsTransposed); 
         {NewLine1, NewLine2} ->
-            ResultFun = fun
-                (false)     -> 0;
-                (OrigCount) -> 0;
-                (Result)    -> Result
-            end,
-            ResultRow    = ResultFun(replace_and_count(NewLine1, Index1, AllMap, IsTransposed)),
-            ResultColumn = ResultFun(replace_and_count(NewLine2, Index2, AllMap, IsTransposed)),
-            case {ResultRow, ResultColumn} of
-                {0, 0} -> false;
-                {_, _} -> ResultRow + ResultColumn
-            end,
-            case Result of
-                false                  -> false;
-                C when C =:= OrigCount -> io:fwrite("XXX WOW~n"), false;
-                _                      -> Result
+            %io:fwrite("XXX Fix ~p ~p (~p) -> ~p ~p~n", [Index1, Index2, IsTransposed, NewLine1, NewLine2]),
+            case replace_and_count(NewLine1, Index1, AllMap, OrigCount, IsTransposed) of
+                false -> 
+                    case replace_and_count(NewLine2, Index2, AllMap, OrigCount, IsTransposed) of
+                        false -> count_result_with_fix(Line1, Map, Index1, Index2+1, AllMap, OrigCount, IsTransposed);
+                        Count -> Count
+                    end;
+                Count ->
+                    Count
             end
     end.
             
 
-replace_and_count(NewLine, Index, Map, IsTransposed) ->
-    io:fwrite("XXXR ~p ~p ~p~n", [NewLine, Index, IsTransposed]),
+replace_and_count(NewLine, Index, Map, OrigCount, IsTransposed) ->
+    %io:fwrite("XXXR ~p ~p ~p~n", [NewLine, Index, IsTransposed]),
     {First, [_|Last]} = split_by_count(Index, Map),
     NewMap  = First ++ [NewLine] ++ Last,
     %print_map(Map),
     %io:fwrite("..................~n"),
     %print_map(NewMap),
     %io:fwrite("------------------~n"),
-    {Map1, Map2} = case IsTransposed of
-        false -> {NewMap, transpose(NewMap)};
-        true  -> {transpose(NewMap), NewMap}
+    MapN = case IsTransposed of
+        false -> NewMap;
+        true  -> transpose(NewMap)
     end,
-    case count_single(Map1) of
-        false -> count_single(Map2);
-        Count -> Count*100
+    count_single(MapN, OrigCount).
+    
+    
+count_single(Map, OrigCount) ->    
+    {OrigCountH, OrigCountV} = case OrigCount of
+        undefined -> {undefined, undefined};
+        {hor, C}  -> {C,         undefined};
+        {ver, C}  -> {undefined, C        }
+    end,
+    %io:fwrite("XXXR OC=~p ~p~n", [OrigCount, find_symetry(Map, OrigCountH)]),
+    case find_symetry(Map, OrigCountH) of
+        false ->
+            MapT = transpose(Map),
+            %io:fwrite("XXXR OC=~p ~p~n", [OrigCount, find_symetry(MapT, OrigCountV)]),
+            case find_symetry(MapT, OrigCountV) of
+                false -> false;
+                Count -> {ver, Count}
+            end;
+        Count ->
+            {hor, Count}
     end.
-    
-    
-count_single(Map) ->
+
+
+find_symetry(Map, NotLine) ->
     MapR = lists:reverse(Map),
     Length = erlang:length(Map),
     [Line1 | OtherMap] = Map,
-    find_symetry(OtherMap, Line1, 1, {Map, MapR, Length}).
+    find_symetry(OtherMap, Line1, 1, {Map, MapR, Length}, NotLine).
 
     
-find_symetry([], _, _, _) ->
+find_symetry([], _, _, _, _) ->
     false;
+
+find_symetry([Line1|Map], _Line0, Index, MapData, Index) ->
+    find_symetry(Map, Line1, Index+1, MapData, Index);
     
-find_symetry([Line1|Map], Line0, Index, MapData) ->
+find_symetry([Line1|Map], Line0, Index, MapData, NotIndex) ->
     case lines_equal(Line0, Line1) of
         true ->
             %io:fwrite("XXX EQUAL ~p ~p~n", [Index, is_symetry(Index, MapData)]),
             case is_symetry(Index, MapData) of
                 true  -> Index;
-                false -> find_symetry(Map, Line1, Index+1, MapData)
+                false -> find_symetry(Map, Line1, Index+1, MapData, NotIndex)
             end;
         false ->
-            find_symetry(Map, Line1, Index+1, MapData)
+            find_symetry(Map, Line1, Index+1, MapData, NotIndex)
     end.
+    
+%find_symetry([], _, _, _, Acc) ->
+%    Acc;
+    
+%find_symetry([Line1|Map], Line0, Index, MapData, Acc) ->
+%    case lines_equal(Line0, Line1) of
+%        true ->
+%            %io:fwrite("XXX EQUAL ~p ~p~n", [Index, is_symetry(Index, MapData)]),
+%            NewAcc = case is_symetry(Index, MapData) of
+%                true  -> [Index | Acc];
+%                false -> Acc
+%            end,
+%            find_symetry(Map, Line1, Index+1, MapData, NewAcc);
+%        false ->
+%            find_symetry(Map, Line1, Index+1, MapData, Acc)
+%    end.
     
     
 lines_equal(A, B) -> A=:=B.
@@ -183,10 +246,10 @@ compare([Line1|Map1], [Line2|Map2], Count) ->
     end.
 
 
-print_map([]) -> ok;
-print_map([S|OtherRows]) ->
-    io:fwrite("Map ~p~n", [S]),
-    print_map(OtherRows).
+%print_map([]) -> ok;
+%print_map([S|OtherRows]) ->
+%    io:fwrite("Map ~p~n", [S]),
+%    print_map(OtherRows).
 
 
 transpose([[]|_]) -> [];
