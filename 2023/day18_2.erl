@@ -1,10 +1,9 @@
 -module(day18_2).
 -export([solve/1]).
 
-% Privertė pamąstyti. Perskaitęs užduotį pamaniau - neįmanoma! Tada pradėjau galvoti, sumąsčiau algoritmą, bet jis buvo
-% per daug paprastas ir neteisingas. Pamąsčiau dar, sumąsčiąu gerą algoritmą, bet jau neturėjau laiko toliau sėdėti.
-% Tai buvo maždaug pusiaukelė. Po pertraukos vėl prisėdau, suprogramavau ir viskas veikė. Buvau trečias savo leader boarde
-% tą išsprendęs (https://adventofcode.com/2023/leaderboard/private/view/438010?order=local_score).
+% Supratau, kad 100k x 100k žemėlapį sunkiai sutalpinsiu į atmintį, o ir kas iš to - matyt, vis tiek ilgai skaičiuos.
+% Nusprendžiau patobulinti algoritmą. Galvojau, pasimesiu su tais indeksais ir ilgai debuginsiu. Bet, pasirodo,
+% viskas buvo geriau, nei aš galvojau. Prasisuka labai greitai net ir su tikrais duomenimis (~16 ms).
 
 solve(FileName) ->
     Input = get_input(FileName),

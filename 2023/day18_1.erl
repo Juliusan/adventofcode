@@ -1,10 +1,8 @@
 -module(day18_1).
 -export([solve/1]).
 
-% Privertė pamąstyti. Perskaitęs užduotį pamaniau - neįmanoma! Tada pradėjau galvoti, sumąsčiau algoritmą, bet jis buvo
-% per daug paprastas ir neteisingas. Pamąsčiau dar, sumąsčiąu gerą algoritmą, bet jau neturėjau laiko toliau sėdėti.
-% Tai buvo maždaug pusiaukelė. Po pertraukos vėl prisėdau, suprogramavau ir viskas veikė. Buvau trečias savo leader boarde
-% tą išsprendęs (https://adventofcode.com/2023/leaderboard/private/view/438010?order=local_score).
+% Iš karto supratau, kad bus panašus į 10 dienos galvosūkį ir viską dariau, kad duomenis suvesčiau į jį.
+% Paskui tiesiog pasinaudojau jo kodu, truputį modifikavus, žinoma.
 
 solve(FileName) ->
     Input = get_input(FileName),
