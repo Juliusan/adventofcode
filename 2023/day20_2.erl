@@ -6,7 +6,8 @@
 % atsakymas galėjo gautis tik su keliomis prielaidomis: kad visas tinklas pasidalina į kelis
 % nepriklausomus potinklius. Kad potinkliuose iki aktyvuojamas tinkamas nodas nėra ciklų (bet
 % šitas gal ir akivaizdu). Jau tik pateikęs atsakymą patvarkiau kodą, kad jis patikrintų mano
-% prielaidas ir suskaičiuotų atsakymą pats.
+% prielaidas ir suskaičiuotų atsakymą pats. UPDATE: pasirodo, (ir vėl) buvau pamiršęs patikrinti,
+% ar radus reikiamą ėjimų skaičių pomedis ciklinasi. Pridėjau tą patikrinimą.
 
 solve(FileName) ->
     Modules = get_input(FileName),
@@ -118,8 +119,21 @@ run_partitions(Partitions) ->
     
 run_partitions([],                AccResult) -> AccResult;
 run_partitions([Part|Partitions], AccResult) ->
-    Result = run_modules(Part),
+    {Result, FinalPart} = run_modules(Part),
+    %io:fwrite("XXX ~p~n", [FinalPart]),
+    %io:fwrite("XXX ~p~n", [Part]),
+    {{ir, [{From, high}], ["dr"]}, FinalPartNoDr} = partition_final(FinalPart),
+    {{ir, [{From, low }], ["dr"]}, PartNoDr     } = partition_final(Part),
+    PartNoDr = FinalPartNoDr,
     run_partitions(Partitions, Result*AccResult).
+    
+    
+partition_final(Map) ->
+    FinalKey = maps:fold(fun
+        ( Key, {ir, _, ["dr"]}, undefined) -> Key;
+        (_Key, _              , Found    ) -> Found
+    end, undefined, Map),
+    maps:take(FinalKey, Map).
 
 
 run_modules(Modules) ->
@@ -134,9 +148,9 @@ run_modules(Modules, Count, States) ->
         true ->
             loop;
         false ->
-            case run_module_single(Modules, [{low, undefined, bcast}], []) of
-                true       -> Count;
-                NewModules -> run_modules(NewModules, Count+1, [get_state(Modules)|States])
+            case run_module_single(Modules) of
+                {true,  NewModules} -> {Count, NewModules};
+                {false, NewModules} -> run_modules(NewModules, Count+1, [get_state(Modules)|States])
             end
     end.
 
@@ -144,16 +158,19 @@ run_modules(Modules, Count, States) ->
 get_state(Modules) -> Modules.
 
 
-run_module_single(Modules, [], []) ->
-    Modules;
+run_module_single(Modules) ->
+    run_module_single(Modules, [{low, undefined, bcast}], [], false).
 
-run_module_single(Modules, [], NextSignals) ->
-    run_module_single(Modules, lists:reverse(NextSignals), []);
+run_module_single(Modules, [], [], Found) ->
+    {Found, Modules};
 
-run_module_single(_Modules, [{high, _SName, "dr"}|_Signals], _NextSignals) ->
-    true;
+run_module_single(Modules, [], NextSignals, Found) ->
+    run_module_single(Modules, lists:reverse(NextSignals), [], Found);
+
+run_module_single(Modules, [{high, _SName, "dr"}|Signals], NextSignals, false) ->
+    run_module_single(Modules, Signals, NextSignals, true);
     
-run_module_single(Modules, [{Type, SName, DName}|Signals], NextSignals) ->
+run_module_single(Modules, [{Type, SName, DName}|Signals], NextSignals, Found) ->
     %io:fwrite("XXX STEP ~p -> (~p) -> ~p~n", [SName, Type, DName]),
     {NM, NNS} = case {maps:find(DName, Modules), Type} of
         {error, _} ->
@@ -186,7 +203,7 @@ run_module_single(Modules, [{Type, SName, DName}|Signals], NextSignals) ->
             NewNextSignals = send_pulse(TypeToSend, DName, Destinations, NextSignals),
             {NewModules, NewNextSignals}
     end,
-    run_module_single(NM, Signals, NNS).
+    run_module_single(NM, Signals, NNS, Found).
 
 
 send_pulse(_Type, _Source, [],                         NextSignals) -> NextSignals;
