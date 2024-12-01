@@ -1,0 +1,10 @@
+{application, aoc_2024, [
+    {description, "Advent of code 2024"},
+    {vsn, git},
+    {registered, [aoc_2024]},
+    {mod, {aoc_2024, {}}},
+    {applications, [
+        kernel,
+        stdlib
+    ]}
+]}.
