@@ -20,6 +20,16 @@ get_integer_test_() ->
     ].
 
 
+get_integer_list_test_() ->
+    [
+        ?_assertEqual([],                 utils:get_integer_list(""                  )),
+        ?_assertEqual([23],               utils:get_integer_list("23"                )),
+        ?_assertEqual([23],               utils:get_integer_list("23   "             )),
+        ?_assertEqual([23, 15],           utils:get_integer_list("15 23"             )),
+        ?_assertEqual([24, 12, 2321, 15], utils:get_integer_list("15     2321 12  24"))
+    ].
+    
+
 count_elems_sorted_test_() ->
     [
         ?_assertEqual({3, [16, 30, 123]}, utils:count_elems_sorted(15, [1, 2, 3, 15, 15, 15, 16, 30, 123])),

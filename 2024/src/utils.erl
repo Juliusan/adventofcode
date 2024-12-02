@@ -1,7 +1,7 @@
 -module(utils).
 -export([print/2]).
 -export([read_line_to_elem/2]).
--export([get_integer/1]).
+-export([get_integer/1, get_integer_list/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
 
@@ -49,6 +49,22 @@ get_integer(Line) -> get_integer(Line, 0).
 
 get_integer([Digit|Else], Acc) when $0 =< Digit, Digit =< $9 -> get_integer(Else, Acc*10 + Digit - $0);
 get_integer(Line,         Acc)                               -> {Acc, Line}.
+
+
+%%
+%%  Reads a list of space separated integers. Returns the list in reverse order.
+%% 
+-spec get_integer_list(string()) -> [integer()].
+
+get_integer_list(Line) -> get_integer_list(Line, []).
+
+get_integer_list("", Acc) ->
+    Acc;
+
+get_integer_list(Line, Acc) ->
+    {Nr, NewLine1} = get_integer(Line),
+    NewLine2 = string:trim(NewLine1, leading),
+    get_integer_list(NewLine2, [Nr | Acc]).
 
 
 %%

@@ -18,18 +18,6 @@
 % 328
 
 
-read_line(Line) ->
-    read_line(Line, []).
-
-read_line("", Acc) ->
-    Acc;
-
-read_line(Line, Acc) ->
-    {Nr, NewLine1} = utils:get_integer(Line),
-    NewLine2 = string:trim(NewLine1, leading),
-    read_line(NewLine2, [Nr | Acc]).
-
-
 %%
 %%  Checks if List is in strictly descending order with consecutive elements not further
 %%  apart than Diff, or it would be if a single element would be removed.
@@ -87,7 +75,7 @@ is_increasing_single_fail(_, _, _, _) ->
 
 
 solve_1(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun read_line/1),
+    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
     erlang:length(lists:filter(fun(Report) ->
         case utils:is_decreasing(Report, 3) of
             true  -> true;
@@ -97,7 +85,7 @@ solve_1(FileName) ->
 
 
 solve_2(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun read_line/1),
+    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
     erlang:length(lists:filter(fun(Report) ->
         case is_decreasing_single_fail(Report, 3) of
             true  -> true;
@@ -107,7 +95,7 @@ solve_2(FileName) ->
 
 
 solve_2_naive(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun read_line/1),
+    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
     DecreasingOrIncreasingFun = fun(Report) ->
         case utils:is_decreasing(Report, 3) of
             true  -> true;
