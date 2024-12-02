@@ -34,3 +34,29 @@ count_elems_start_test_() ->
         ?_assertEqual({1, [16, 30, 123]}, utils:count_elems_start([15,         16, 30, 123])),
         ?_assertEqual({3, [16, 30, 123]}, utils:count_elems_start([15, 15, 15, 16, 30, 123]))
     ].
+
+
+is_decreasing_test_() ->
+    [
+        ?_assertEqual(true,  utils:is_decreasing([],                   1)),
+        ?_assertEqual(true,  utils:is_decreasing([20],                 1)),
+        ?_assertEqual(true,  utils:is_decreasing([20, 19, 18, 17, 16], 1)),
+        ?_assertEqual(false, utils:is_decreasing([20, 19, 18, 15, 12], 1)),
+        ?_assertEqual(true,  utils:is_decreasing([20, 19, 18, 17, 16], 3)),
+        ?_assertEqual(true,  utils:is_decreasing([20, 19, 18, 15, 12], 3)),
+        ?_assertEqual(false, utils:is_decreasing([20, 15, 14, 13, 12], 3)),
+        ?_assertEqual(false, utils:is_decreasing([20, 21, 19, 17, 15], 3))
+    ].
+
+
+is_increasing_test_() ->
+    [
+        ?_assertEqual(true,  utils:is_increasing([],                   1)),
+        ?_assertEqual(true,  utils:is_increasing([20],                 1)),
+        ?_assertEqual(true,  utils:is_increasing([20, 21, 22, 23, 24], 1)),
+        ?_assertEqual(false, utils:is_increasing([20, 21, 22, 25, 28], 1)),
+        ?_assertEqual(true,  utils:is_increasing([20, 21, 22, 23, 24], 3)),
+        ?_assertEqual(true,  utils:is_increasing([20, 21, 22, 25, 28], 3)),
+        ?_assertEqual(false, utils:is_increasing([20, 25, 26, 27, 28], 3)),
+        ?_assertEqual(false, utils:is_increasing([20, 19, 21, 23, 25], 3))
+    ].

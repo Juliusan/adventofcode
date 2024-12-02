@@ -3,12 +3,13 @@
 -export([read_line_to_elem/2]).
 -export([get_integer/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
+-export([is_decreasing/2, is_increasing/2]).
 
 
 %%
 %%  Outputs message to terminal.
 %% 
-print(Pattern, Params) -> io:fwrite(Pattern, Params).
+print(Pattern, Params) -> io:fwrite(Pattern ++ "~n", Params).
 
 
 %%
@@ -74,3 +75,29 @@ count_elems_start([Elem|List]) -> count_elems_start(Elem, List, 1).
 
 count_elems_start(Elem, [Elem|List], Acc) -> count_elems_start(Elem, List, Acc+1);
 count_elems_start(_,    List,        Acc) -> {Acc, List}.
+
+
+%%
+%%  Checks if List is in strictly descending order with consecutive elements not further
+%%  apart than Diff
+%% 
+-spec is_decreasing(List :: [number()], Diff :: number()) -> boolean().
+
+is_decreasing([],                  _   ) -> true;
+is_decreasing([_],                 _   ) -> true;
+is_decreasing([Elem1, Elem2|Else], Diff) when Elem1 > Elem2, Elem1-Elem2 =< Diff -> is_decreasing([Elem2|Else], Diff);
+is_decreasing(_,                   _   ) -> false.
+
+
+
+
+%%
+%%  Checks if List is in strictly ascending order with consecutive elements not further
+%%  apart than Diff
+%% 
+-spec is_increasing(List :: [number()], Diff :: number()) -> boolean().
+
+is_increasing([], _) -> true;
+is_increasing([_], _) -> true;
+is_increasing([Elem1, Elem2|Else], Diff) when Elem2 > Elem1, Elem2-Elem1 =< Diff -> is_increasing([Elem2|Else], Diff);
+is_increasing(_, _) -> false.

@@ -1,7 +1,8 @@
 -module(day01).
 -export([solve_1/1, solve_2/1]).
 
-% 21:57 11:49
+% Nebuvo sunku. Reikėjo prisiminti, kaip viską leisti, vėl iš naujo bendro
+% naudojimo funkcijas rašyti. Tas ir užtruko. Ilgai neplaukiojau.
 
 % 46> c(utils).                        
 % {ok,utils}
