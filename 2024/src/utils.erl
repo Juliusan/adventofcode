@@ -1,6 +1,6 @@
 -module(utils).
 -export([print/2]).
--export([read_line_to_elem/2]).
+-export([read_single_line/1, read_lines/1, read_line_to_elem/2]).
 -export([get_integer/1, get_integer_list/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
@@ -13,14 +13,41 @@ print(Pattern, Params) -> io:fwrite(Pattern ++ "~n", Params).
 
 
 %%
-%% Reads file FileName and each line converts to a single element in the resulting list, using LineToElemFun.
-%% The returned list is in reversed order compared to input file.
+%%  Reads single line from file FileName.
+%% 
+-spec read_single_line(
+    FileName :: string()
+) ->
+    Line :: string().
+
+read_single_line(FileName) ->
+    {ok, File} = file:open(FileName, [read]),
+    {ok, Line} = file:read_line(File),
+    ok = file:close(File),
+    Line.
+
+
+%%
+%%  Reads file FileName and returns the list of lines.
+%%  The returned list is in reversed order compared to input file.
+%% 
+-spec read_lines(
+    FileName :: string()
+) ->
+    [Line :: string()].
+
+read_lines(FileName) -> read_line_to_elem(FileName, fun(Line) -> Line end).
+
+
+%%
+%%  Reads file FileName and each line converts to a single element in the resulting list, using LineToElemFun.
+%%  The returned list is in reversed order compared to input file.
 %% 
 -spec read_line_to_elem(
     FileName      :: string(),
     LineToElemFun :: fun((Line :: string()) -> ElemType)
 ) ->
-    [ ElemType] when
+    [ElemType] when
         ElemType :: term().
         
 read_line_to_elem(FileName, LineToElemFun) ->
