@@ -18,10 +18,12 @@
 % 89349241
 
 
-parse_operation(Line) -> parse_operation(Line, 0, true, false).
+parse_operation(Line) -> parse_operation(Line, false).
 
-parse_operation("", Acc, Enabled, _) ->
-    {Acc, Enabled};
+parse_operation(Line, ScanDos) -> parse_operation(Line, 0, true, ScanDos).
+
+parse_operation("", Acc, _, _) ->
+    Acc;
 
 parse_operation([$m, $u, $l | Else], Acc, true, ScanDos) ->
     parse_param_list(Else, Acc, ScanDos);
@@ -77,16 +79,10 @@ parse_number(Line, Acc, _) -> {Acc, Line}.
 
 
 solve_1(FileName) ->
-    Lines = utils:read_lines(FileName),
-    lists:sum(lists:map(fun(Line) ->
-        {Sum, _} = parse_operation(Line),
-        Sum
-    end, Lines)).
+    Memory = utils:read_file(FileName),
+    parse_operation(Memory).
 
 
 solve_2(FileName) ->
-    Lines = lists:reverse(utils:read_lines(FileName)),
-    {Result, _} = lists:foldl(fun(Line, {AccSum, Enabled}) ->
-        parse_operation(Line, AccSum, Enabled, true)
-    end, {0, true}, Lines),
-    Result.
+    Memory = utils:read_file(FileName),
+    parse_operation(Memory, true).

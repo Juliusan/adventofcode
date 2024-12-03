@@ -1,6 +1,6 @@
 -module(utils).
 -export([print/2]).
--export([read_single_line/1, read_lines/1, read_line_to_elem/2]).
+-export([read_file/1, read_lines/1, read_line_to_elem/2]).
 -export([get_integer/1, get_integer_list/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
@@ -13,18 +13,17 @@ print(Pattern, Params) -> io:fwrite(Pattern ++ "~n", Params).
 
 
 %%
-%%  Reads single line from file FileName.
+%%  Reads the whole file FileName into a single string.
 %% 
--spec read_single_line(
+-spec read_file(
     FileName :: string()
 ) ->
-    Line :: string().
+    Contents :: string().
 
-read_single_line(FileName) ->
-    {ok, File} = file:open(FileName, [read]),
-    {ok, Line} = file:read_line(File),
-    ok = file:close(File),
-    Line.
+read_file(FileName) ->
+    Lines = read_lines(FileName),
+    LinesR = lists:reverse(Lines),
+    lists:append(LinesR).
 
 
 %%
