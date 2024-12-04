@@ -31,65 +31,37 @@ count_xmas([$X,$M,$A,$S|Else], Acc) -> count_xmas(Else, Acc+1);
 count_xmas([_|Else], Acc) -> count_xmas(Else, Acc).
 
 
-count_x_mas(Lines) ->
-    count_x_mas(Lines, 0).
+count_x_mas_lines(Lines) ->
+    count_x_mas_lines(Lines, 0).
 
-count_x_mas([], Acc) -> Acc;
-count_x_mas([_], Acc) -> Acc;
-count_x_mas([_,_], Acc) -> Acc;
-count_x_mas([Diag1, Diag2, Diag3|Else], Acc) ->
-    Count = count_x_mas(Diag1, Diag2, Diag3, 0),
-    count_x_mas([Diag2, Diag3|Else], Acc+Count).
+count_x_mas_lines([],                          Acc) -> Acc;
+count_x_mas_lines([_],                         Acc) -> Acc;
+count_x_mas_lines([_,     _],                  Acc) -> Acc;
+count_x_mas_lines([Line1, Line2, Line3|Lines], Acc) ->
+    Count = count_x_mas(Line1, Line2, Line3, 0),
+    count_x_mas_lines([Line2, Line3|Lines], Acc+Count).
 
-count_x_mas([],[],[], Acc) -> Acc;
-count_x_mas([$M,E1,$M|Else1],[_,$A,E2|Else2],[$S,E3,$S|Else3], Acc) -> count_x_mas([E1,$M|Else1],[$A,E2|Else2],[E3,$S|Else3], Acc + 1);
-count_x_mas([$M,E1,$S|Else1],[_,$A,E2|Else2],[$M,E3,$S|Else3], Acc) -> count_x_mas([E1,$S|Else1],[$A,E2|Else2],[E3,$S|Else3], Acc + 1);
-count_x_mas([$S,E1,$M|Else1],[_,$A,E2|Else2],[$S,E3,$M|Else3], Acc) -> count_x_mas([E1,$M|Else1],[$A,E2|Else2],[E3,$M|Else3], Acc + 1);
-count_x_mas([$S,E1,$S|Else1],[_,$A,E2|Else2],[$M,E3,$M|Else3], Acc) -> count_x_mas([E1,$S|Else1],[$A,E2|Else2],[E3,$M|Else3], Acc + 1);
-count_x_mas([_|Else1],[_|Else2],[_|Else3], Acc) -> count_x_mas(Else1,Else2,Else3, Acc).
-    
-
--spec transpose(
-    ListOfLists :: [list()]
-) ->
-    ListOfLists :: [list()].
-
-transpose([[]|_]) ->
-    [];
-transpose(M) ->
-    [lists:map(fun erlang:hd/1, M) | transpose(lists:map(fun erlang:tl/1, M))].
+count_x_mas([],                    [],                   [],                    Acc) -> Acc;
+count_x_mas([$M,E12,$M=E13|Line1], [_,$A=E22,E23|Line2], [$S,E32,$S=E33|Line3], Acc) -> count_x_mas([E12,E13|Line1], [E22,E23|Line2], [E32,E33|Line3], Acc + 1);
+count_x_mas([$M,E12,$S=E13|Line1], [_,$A=E22,E23|Line2], [$M,E32,$S=E33|Line3], Acc) -> count_x_mas([E12,E13|Line1], [E22,E23|Line2], [E32,E33|Line3], Acc + 1);
+count_x_mas([$S,E12,$M=E13|Line1], [_,$A=E22,E23|Line2], [$S,E32,$M=E33|Line3], Acc) -> count_x_mas([E12,E13|Line1], [E22,E23|Line2], [E32,E33|Line3], Acc + 1);
+count_x_mas([$S,E12,$S=E13|Line1], [_,$A=E22,E23|Line2], [$M,E32,$M=E33|Line3], Acc) -> count_x_mas([E12,E13|Line1], [E22,E23|Line2], [E32,E33|Line3], Acc + 1);
+count_x_mas([_|Line1],             [_|Line2],            [_|Line3],             Acc) -> count_x_mas(Line1,           Line2,           Line3,           Acc    ).
 
 
-reverse_list(Lines) ->
+reverse_sublists(Lines) ->
     lists:map(fun lists:reverse/1, Lines).
 
 
-diag_back(Lines) ->
-    diag_back(Lines, 1, []).
-
-
-diag_back([], _, Acc) -> Acc;
-diag_back(Lines, Count, Acc) ->
-    {Single, NewLines} = diag_back_single(Lines, Count, [], []),
-    NewLines2 = lists:filter(fun([]) -> false; (_) -> true end, NewLines),
-    %utils:print("BACK ~p ~p", [Single, NewLines2]),
-    diag_back(NewLines2, Count+1, [Single|Acc]).
-
-diag_back_single(ElseLines, 0, AccSingle, AccLines) -> {AccSingle, lists:reverse(AccLines)++ElseLines};
-diag_back_single([], _, AccSingle, AccLines) -> {AccSingle, lists:reverse(AccLines)};
-diag_back_single([[]|ElseLines], _, AccSingle, AccLines) -> {AccSingle, lists:reverse(AccLines) ++ ElseLines};
-diag_back_single([[Elem|Else]|ElseLines], Curr, AccSingle, AccLines) -> 
-    diag_back_single(ElseLines, Curr-1, [Elem|AccSingle], [Else|AccLines]).
-
 solve_1(FileName) ->
     Lines    = utils:read_lines(FileName),
-    LinesR   = reverse_list(Lines),
-    LinesT   = transpose(Lines),
-    LinesTR  = reverse_list(LinesT),
-    LinesDB  = diag_back(Lines),
-    LinesDBR = reverse_list(LinesDB),
-    LinesDF  = diag_back(LinesR),
-    LinesDFR = reverse_list(LinesDF),
+    LinesR   = reverse_sublists(Lines),
+    LinesT   = utils:transpose(Lines),
+    LinesTR  = reverse_sublists(LinesT),
+    LinesDB  = utils:diagonals_b(Lines),
+    LinesDBR = reverse_sublists(LinesDB),
+    LinesDF  = utils:diagonals_b(LinesR),
+    LinesDFR = reverse_sublists(LinesDF),
     Hor    = count_xmas_lines(Lines),
     HorR   = count_xmas_lines(LinesR),
     Ver    = count_xmas_lines(LinesT),
@@ -114,24 +86,4 @@ solve_1(FileName) ->
 
 solve_2(FileName) ->
     Lines = utils:read_lines(FileName),
-    count_x_mas(Lines).
-
-
-%%% ============================================================================
-%%% Test cases for internal functions.
-%%% ============================================================================
-
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
-diag_back_test_() ->
-    [
-        ?_assertEqual([[4],[3,2],[1]],  diag_back([[1,2],[3,4]])),
-        ?_assertEqual([[6],[5,3],[4,2],[1]],  diag_back([[1,2,3],[4,5,6]])),
-        ?_assertEqual([[6],[5,4],[3,2],[1]],  diag_back([[1,2],[3,4],[5,6]])),
-        ?_assertEqual([[9],[8,6],[7,5,3],[4,2],[1]],  diag_back([[1,2,3],[4,5,6],[7,8,9]])),
-        ?_assertEqual(ok, ok)
-    ].
-
-
--endif.
+    count_x_mas_lines(Lines).

@@ -135,8 +135,7 @@ is_decreasing_single_fail_test_() ->
         ?_assertEqual(true,  is_decreasing_single_fail([20, 19, 18, 17, 12], 3)),
         ?_assertEqual(false, is_decreasing_single_fail([20, 15, 21, 17, 16], 3)),
         ?_assertEqual(false, is_decreasing_single_fail([20, 19, 21, 11, 10], 3)),
-        ?_assertEqual(false, is_decreasing_single_fail([20, 19, 21, 18, 10], 3)),
-        ?_assertEqual(ok, ok)
+        ?_assertEqual(false, is_decreasing_single_fail([20, 19, 21, 18, 10], 3))
     ].
 
 
@@ -160,8 +159,7 @@ is_increasing_single_fail_test_() ->
         ?_assertEqual(true,  is_increasing_single_fail([20, 21, 22, 23, 34], 3)),
         ?_assertEqual(false, is_increasing_single_fail([20, 24, 18, 19, 21], 3)),
         ?_assertEqual(false, is_increasing_single_fail([20, 24, 25, 23, 26], 3)),
-        ?_assertEqual(false, is_increasing_single_fail([20, 21, 19, 22, 29], 3)),
-        ?_assertEqual(ok, ok)
+        ?_assertEqual(false, is_increasing_single_fail([20, 21, 19, 22, 29], 3))
     ].
 
 -endif.

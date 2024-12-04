@@ -70,3 +70,41 @@ is_increasing_test_() ->
         ?_assertEqual(false, utils:is_increasing([20, 25, 26, 27, 28], 3)),
         ?_assertEqual(false, utils:is_increasing([20, 19, 21, 23, 25], 3))
     ].
+
+
+transpose_test_() ->
+    [
+        ?_assertEqual([],                        utils:transpose([])),
+        ?_assertEqual([[1]  ],                   utils:transpose([[1]  ])),
+        ?_assertEqual([[1],    [2]    ],         utils:transpose([[1,2]])),
+        ?_assertEqual([[1,2]],                   utils:transpose([[1],    [2]    ])),
+        ?_assertEqual([[1,4],  [2,5],  [3,6]  ], utils:transpose([[1,2,3],[4,5,6]])),
+        ?_assertEqual([[1,2,3],[4,5,6]],         utils:transpose([[1,4],  [2,5],  [3,6]  ])),
+        ?_assertEqual([[1,4,7],[2,5,8],[3,6,9]], utils:transpose([[1,2,3],[4,5,6],[7,8,9]]))
+    ].
+
+
+diagonals_f_test_() ->
+    [
+        ?_assertEqual([],                            utils:diagonals_f([])),
+        ?_assertEqual([[1]],                         utils:diagonals_f([[1]  ])),
+        ?_assertEqual([[2],[1]],                     utils:diagonals_f([[1,2]])),
+        ?_assertEqual([[2],[1]],                     utils:diagonals_f([[1],    [2]    ])),
+        ?_assertEqual([[4],[3,2],[1]],               utils:diagonals_f([[1,2],  [3,4]  ])),
+        ?_assertEqual([[6],[5,3],[4,2],[1]],         utils:diagonals_f([[1,2,3],[4,5,6]])),
+        ?_assertEqual([[6],[5,4],[3,2],[1]],         utils:diagonals_f([[1,2],  [3,4],  [5,6]  ])),
+        ?_assertEqual([[9],[8,6],[7,5,3],[4,2],[1]], utils:diagonals_f([[1,2,3],[4,5,6],[7,8,9]]))
+    ].
+
+
+diagonals_b_test_() ->
+    [
+        ?_assertEqual([],                            utils:diagonals_b([])),
+        ?_assertEqual([[1]],                         utils:diagonals_b([[1]  ])),
+        ?_assertEqual([[1],[2]],                     utils:diagonals_b([[1,2]])),
+        ?_assertEqual([[2],[1]],                     utils:diagonals_b([[1],    [2]    ])),
+        ?_assertEqual([[3],[4,1],[2]],               utils:diagonals_b([[1,2],  [3,4]  ])),
+        ?_assertEqual([[4],[5,1],[6,2],[3]],         utils:diagonals_b([[1,2,3],[4,5,6]])),
+        ?_assertEqual([[5],[6,3],[4,1],[2]],         utils:diagonals_b([[1,2],  [3,4],  [5,6]  ])),
+        ?_assertEqual([[7],[8,4],[9,5,1],[6,2],[3]], utils:diagonals_b([[1,2,3],[4,5,6],[7,8,9]]))
+    ].

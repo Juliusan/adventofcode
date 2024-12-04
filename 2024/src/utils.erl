@@ -4,6 +4,7 @@
 -export([get_integer/1, get_integer_list/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
+-export([transpose/1, diagonals_f/1, diagonals_b/1]).
 
 
 %%
@@ -143,3 +144,59 @@ is_increasing([], _) -> true;
 is_increasing([_], _) -> true;
 is_increasing([Elem1, Elem2|Else], Diff) when Elem2 > Elem1, Elem2-Elem1 =< Diff -> is_increasing([Elem2|Else], Diff);
 is_increasing(_, _) -> false.
+
+
+%%
+%%  Transposes list of lists ListOfLists. 
+%%  This function is defined only if each list in ListOfLists is of the same size.
+%% 
+-spec transpose(ListOfLists :: [List]) ->  ListOfLists :: [List]
+    when List :: [term()].
+
+transpose([])          -> [];
+transpose([[]|_])      -> [];
+transpose(ListOfLists) -> [lists:map(fun erlang:hd/1, ListOfLists) | transpose(lists:map(fun erlang:tl/1, ListOfLists))].
+
+
+%%
+%%  Returns all the forward diagonals (of the form /) of ListOfLists.
+%%  Diagonals are returned in reverse order (starting from the bottom right corner and
+%%  ending with the top left corned) and each one is reversed (from bottom left element
+%%  to the top right one):
+%%      diagonal_f(1 2) = [4], [3,2], [1]
+%%                (3 4)
+%%  This function is defined only if each list in ListOfLists is of the same size.
+%% 
+-spec diagonals_f(ListOfLists :: [List]) ->  ListOfLists :: [List]
+    when List :: [term()].
+
+
+diagonals_f(ListOfLists) -> 
+    diagonals_f(ListOfLists, 1, []).
+    
+diagonals_f([],          _,     AccDiagonals) -> AccDiagonals;
+diagonals_f(ListOfLists, Count, AccDiagonals) ->
+    {Diagonal, NewListOfLists} = diagonal_f(ListOfLists, Count, [], []),
+    diagonals_f(NewListOfLists, Count+1, [Diagonal|AccDiagonals]).
+    
+diagonal_f(ListOfLists,               0,     AccDiagonal, AccListOfLists) -> {AccDiagonal, lists:reverse(AccListOfLists)++ListOfLists};
+diagonal_f([],                        _,     AccDiagonal, AccListOfLists) -> {AccDiagonal, lists:reverse(AccListOfLists)};
+diagonal_f([[Elem]|ListOfLists],      Index, AccDiagonal, AccListOfLists) -> diagonal_f(ListOfLists, Index-1, [Elem|AccDiagonal], AccListOfLists);
+diagonal_f([[Elem|List]|ListOfLists], Index, AccDiagonal, AccListOfLists) -> diagonal_f(ListOfLists, Index-1, [Elem|AccDiagonal], [List|AccListOfLists]).
+
+
+%%
+%%  Returns all the backwards diagonals (of the form \) of ListOfLists.
+%%  Diagonals are returned starting from the bottom left corner and ending
+%%  with the top right corned. Each of the diagonals is reversed (from bottom
+%%  right element to the top left one):
+%%      diagonal_f(1 2) = [3], [4,1], [2]
+%%                (3 4)
+%%  This function is defined only if each list in ListOfLists is of the same size.
+%% 
+-spec diagonals_b(ListOfLists :: [List]) ->  ListOfLists :: [List]
+    when List :: [term()].
+
+diagonals_b(ListOfLists) ->
+    ListOfListsT = lists:map(fun lists:reverse/1, ListOfLists),
+    diagonals_f(ListOfListsT).
