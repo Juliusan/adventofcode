@@ -1,4 +1,5 @@
 REBAR=rebar3
+EUNIT_ARGS=
 
 all: compile
 
