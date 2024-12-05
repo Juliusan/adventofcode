@@ -1,5 +1,5 @@
 -module(day05).
--export([solve_1/1, solve_2/1]).
+-export([solve_1/1, solve_2/1, check/1]).
 
 % Abi dalys buvo nesunkios. Tik daug visokių pagalbinių funkcijų prisirašyti
 % reikėjo. Pradžiai galvojau, ar bet kurie du skaičiai bus palyginti prie
@@ -57,7 +57,7 @@ is_update_right_order([Nr1|OtherUpdate], Constraints) ->
 solve_1(FileName) ->
     {Updates, Constraints} = read_inputs(FileName),
     UpdatesR = lists:filter(fun(Update) -> is_update_right_order(Update, Constraints) end, Updates),
-    lists:sum(lists:map(fun utils:middle_single/1/1, UpdatesR)).
+    lists:sum(lists:map(fun utils:middle_single/1, UpdatesR)).
 
 
 solve_2(FileName) ->
@@ -76,3 +76,39 @@ solve_2(FileName) ->
         utils:middle_single(UpdateC)
     end,
     lists:sum(lists:map(CorrectMiddleFun, UpdatesW)).
+
+
+check(FileName) ->
+    {_, Constraints} = read_inputs(FileName),
+    AllNewKeys = lists:usort(maps:fold(fun(_Nr1, Constraint, Acc) ->
+        NewKeys = lists:filter(fun(Nr2) -> maps:get(Nr2, Constraints, undefined) =:= undefined end, Constraint),
+        case NewKeys of
+            [] -> ok;
+            _  -> utils:print("New keys: ~w", [NewKeys])
+        end,
+        NewKeys ++ Acc
+    end, [], Constraints)),
+    utils:print("Adding keys ~w", [AllNewKeys]),
+    Constraints2 = lists:foldl(fun(Nr, Acc) -> Acc#{Nr => []} end, Constraints, AllNewKeys),
+    Nrs = maps:keys(Constraints2),
+    CheckNrsFun = fun
+        CheckNrsFun([], Acc) -> Acc;
+        CheckNrsFun([Nr1|Else], Acc) ->
+            C1 = maps:get(Nr1, Constraints2),
+            CheckNrFun = fun
+                CheckNrFun([], Accc) -> Accc;
+                CheckNrFun([Nr2|Elsee], Accc) ->
+                    C2 = maps:get(Nr2, Constraints2),
+                    NewAccc = case {lists:member(Nr1, C2), lists:member(Nr2, C1)} of
+                        {true,  false} -> Accc;
+                        {false, true } -> Accc;
+                        {false, false} -> utils:print("Unknown: ~p ~p", [Nr1, Nr2]), [{Nr1, Nr2}|Accc]
+                    end,
+                    CheckNrFun(Elsee, NewAccc)
+            end,
+            NewAcc = CheckNrFun(Else, Acc),
+            CheckNrsFun(Else, NewAcc)
+    end,
+    Missing = lists:usort(CheckNrsFun(Nrs, [])),
+    utils:print("All missing pairs: ~p", [Missing]),
+    ok.
