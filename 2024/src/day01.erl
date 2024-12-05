@@ -4,29 +4,28 @@
 % Nebuvo sunku. Reikėjo prisiminti, kaip viską leisti, vėl iš naujo bendro
 % naudojimo funkcijas rašyti. Tas ir užtruko. Ilgai neplaukiojau.
 
-% 46> c(utils).                        
+% 46> c(utils).
 % {ok,utils}
-% 47> c(day01).                        
+% 47> c(day01).
 % {ok,day01}
-% 48> day01:solve_1("day01-PVZ.txt").  
+% 48> day01:solve_1("day01-PVZ.txt").
 % 11
 % 49> day01:solve_1("day01.txt").
 % 2756096
 % 50> day01:solve_2("day01-PVZ.txt").
 % 31
-% 51> day01:solve_2("day01.txt").    
+% 51> day01:solve_2("day01.txt").
 % 23117829
 
 
 read_line(Line) ->
-    {Nr1, NewLine1} = utils:get_integer(Line),
-    NewLine2 = string:trim(NewLine1, leading),
-    {Nr2, _} = utils:get_integer(NewLine2),
+    LineNoNL = utils:drop_trailing_new_line(Line),
+    [Nr1, Nr2] = utils:get_integer_list(LineNoNL, " "),
     {Nr1, Nr2}.
 
 
 read_sort_lists(FileName) ->
-    Lists = utils:read_line_to_elem(FileName, fun read_line/1),
+    Lists = utils:read_lines_to_elems(FileName, fun read_line/1),
     {List1, List2} = lists:unzip(Lists),
     List1S = lists:sort(List1),
     List2S = lists:sort(List2),

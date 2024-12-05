@@ -21,7 +21,7 @@
 %%
 %%  Checks if List is in strictly descending order with consecutive elements not further
 %%  apart than Diff, or it would be if a single element would be removed.
-%% 
+%%
 is_decreasing_single_fail([],                  _   ) -> true;
 is_decreasing_single_fail([_],                 _   ) -> true;
 is_decreasing_single_fail([Elem1, Elem2|Else], Diff) -> is_decreasing_single_fail([Elem1,Elem2|Else], Diff, Elem2+1, false).
@@ -49,7 +49,7 @@ is_decreasing_single_fail(_, _, _, _) ->
 %%
 %%  Checks if List is in strictly ascending order with consecutive elements not further
 %%  apart than Diff, or it would be if a single element would be removed.
-%% 
+%%
 is_increasing_single_fail([],                 _   ) -> true;
 is_increasing_single_fail([_],                _   ) -> true;
 is_increasing_single_fail([Elem1,Elem2|Else], Diff) -> is_increasing_single_fail([Elem1,Elem2|Else], Diff, Elem2-1, false).
@@ -75,7 +75,7 @@ is_increasing_single_fail(_, _, _, _) ->
 
 
 solve_1(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
+    Reports = utils:read_lines_no_new_line_to_elems(FileName, fun utils:get_integer_list/1),
     erlang:length(lists:filter(fun(Report) ->
         case utils:is_decreasing(Report, 3) of
             true  -> true;
@@ -85,7 +85,7 @@ solve_1(FileName) ->
 
 
 solve_2(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
+    Reports = utils:read_lines_no_new_line_to_elems(FileName, fun utils:get_integer_list/1),
     erlang:length(lists:filter(fun(Report) ->
         case is_decreasing_single_fail(Report, 3) of
             true  -> true;
@@ -95,7 +95,7 @@ solve_2(FileName) ->
 
 
 solve_2_naive(FileName) ->
-    Reports = utils:read_line_to_elem(FileName, fun utils:get_integer_list/1),
+    Reports = utils:read_lines_no_new_line_to_elems(FileName, fun utils:get_integer_list/1),
     DecreasingOrIncreasingFun = fun(Report) ->
         case utils:is_decreasing(Report, 3) of
             true  -> true;
@@ -106,7 +106,7 @@ solve_2_naive(FileName) ->
         ReportVariants = [Report | [ Start ++ End || N <- lists:seq(0, erlang:length(Report)), {Start, [_|End]} <- [lists:split(N, Report)] ] ],
         lists:any(DecreasingOrIncreasingFun, ReportVariants)
     end, Reports)).
-    
+
 
 %%% ============================================================================
 %%% Test cases for internal functions.

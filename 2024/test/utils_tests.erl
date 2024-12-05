@@ -5,7 +5,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 
-% 74> c(utils_tests).    
+% 74> c(utils_tests).
 % {ok,utils_tests}
 % 75> utils_tests:test().
 %   All 11 tests passed.
@@ -25,10 +25,26 @@ get_integer_list_test_() ->
         ?_assertEqual([],                 utils:get_integer_list(""                  )),
         ?_assertEqual([23],               utils:get_integer_list("23"                )),
         ?_assertEqual([23],               utils:get_integer_list("23   "             )),
-        ?_assertEqual([23, 15],           utils:get_integer_list("15 23"             )),
-        ?_assertEqual([24, 12, 2321, 15], utils:get_integer_list("15     2321 12  24"))
+        ?_assertEqual([23],               utils:get_integer_list("    23"            )),
+        ?_assertEqual([23],               utils:get_integer_list("    23   "         )),
+        ?_assertEqual([15, 23],           utils:get_integer_list("15 23"             )),
+        ?_assertEqual([15, 2321, 12, 24], utils:get_integer_list("15     2321 12  24")),
+
+        ?_assertEqual([15, 23],           utils:get_integer_list("15,23"          , "," )),
+        ?_assertEqual([15, 2321, 12, 24], utils:get_integer_list("15,2321,,12,24,", "," )),
+        ?_assertEqual([15, 2321, 2014],   utils:get_integer_list("15, 2321, 2014",  ", "))
     ].
-    
+
+
+drop_trailing_new_line_test_() ->
+    [
+        ?_assertEqual("",           utils:drop_trailing_new_line("\n"          )),
+        ?_assertEqual("\n",         utils:drop_trailing_new_line("\n\n"        )),
+        ?_assertEqual("abcdef",     utils:drop_trailing_new_line("abcdef\n"    )),
+        ?_assertEqual("abc\ndef",   utils:drop_trailing_new_line("abc\ndef\n"  )),
+        ?_assertEqual("ab\ncd\nef", utils:drop_trailing_new_line("ab\ncd\nef\n"))
+    ].
+
 
 count_elems_sorted_test_() ->
     [
@@ -107,4 +123,26 @@ diagonals_b_test_() ->
         ?_assertEqual([[4],[5,1],[6,2],[3]],         utils:diagonals_b([[1,2,3],[4,5,6]])),
         ?_assertEqual([[5],[6,3],[4,1],[2]],         utils:diagonals_b([[1,2],  [3,4],  [5,6]  ])),
         ?_assertEqual([[7],[8,4],[9,5,1],[6,2],[3]], utils:diagonals_b([[1,2,3],[4,5,6],[7,8,9]]))
+    ].
+
+
+middle_test_() ->
+    [
+        ?_assertEqual([1],   utils:middle([1]          )),
+        ?_assertEqual([1,2], utils:middle([1,2]        )),
+        ?_assertEqual([2],   utils:middle([1,2,3]      )),
+        ?_assertEqual([2,3], utils:middle([1,2,3,4]    )),
+        ?_assertEqual([n],   utils:middle([a,6,n,u,9]  )),
+        ?_assertEqual([n,5], utils:middle([a,6,n,5,u,9]))
+    ].
+
+
+middle_single_test_() ->
+    [
+        ?_assertEqual(1, utils:middle_single([1]          )),
+        ?_assertEqual(2, utils:middle_single([1,2,3]      )),
+        ?_assertEqual(n, utils:middle_single([a,6,n,u,9]  )),
+        ?_assertError(_, utils:middle_single([1,2]        )),
+        ?_assertError(_, utils:middle_single([1,2,3,4]    )),
+        ?_assertError(_, utils:middle_single([a,6,n,5,u,9]))
     ].
