@@ -36,6 +36,20 @@ get_integer_list_test_() ->
     ].
 
 
+get_char_matrix_test_() ->
+    [
+        ?_assertEqual({#{},                              0, 0}, utils:get_char_matrix([])),
+        ?_assertEqual({#{{1,1}=>$a},                     1, 1}, utils:get_char_matrix(["a"])),
+        ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c}, 1, 3}, utils:get_char_matrix(["abc"])),
+        ?_assertEqual({#{{1,1}=>$a,{2,1}=>$b},           2, 1}, utils:get_char_matrix(["a", "b"])),
+        ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c,
+                         {2,1}=>$d,{2,2}=>$e,{2,3}=>$f}, 2, 3}, utils:get_char_matrix(["abc","def"])),
+        ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c,
+                         {2,1}=>$d,{2,2}=>$e,{2,3}=>$f,
+                         {3,1}=>$g,{3,2}=>$h,{3,3}=>$i}, 3, 3}, utils:get_char_matrix(["abc","def","ghi"]))
+    ].
+
+
 drop_trailing_new_line_test_() ->
     [
         ?_assertEqual("",           utils:drop_trailing_new_line("\n"          )),
@@ -145,4 +159,25 @@ middle_single_test_() ->
         ?_assertError(_, utils:middle_single([1,2]        )),
         ?_assertError(_, utils:middle_single([1,2,3,4]    )),
         ?_assertError(_, utils:middle_single([a,6,n,5,u,9]))
+    ].
+
+
+matrix_index_of_test_() ->
+    [
+        ?_assertEqual(undefined, utils:matrix_index_of(a, #{}          )),
+        ?_assertEqual({1,1},     utils:matrix_index_of(a, #{{1,1}=>a,{1,2}=>b,{2,1}=>c,{2,2}=>d})),
+        ?_assertEqual({1,2},     utils:matrix_index_of(b, #{{1,1}=>a,{1,2}=>b,{2,1}=>c,{2,2}=>d})),
+        ?_assertEqual({2,1},     utils:matrix_index_of(c, #{{1,1}=>a,{1,2}=>b,{2,1}=>c,{2,2}=>d})),
+        ?_assertEqual({2,2},     utils:matrix_index_of(d, #{{1,1}=>a,{1,2}=>b,{2,1}=>c,{2,2}=>d})),
+        ?_assertEqual(undefined, utils:matrix_index_of(e, #{{1,1}=>a,{1,2}=>b,{2,1}=>c,{2,2}=>d}))
+    ].
+
+
+matrix_foldl_test_() ->
+    [
+        ?_assertEqual(ok,      utils:matrix_foldl(fun(_,_,_,_    ) -> fail             end, ok,     #{}, 0, 0          )),
+        ?_assertEqual(29,      utils:matrix_foldl(fun(R,_,V,A    ) -> A+R*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
+        ?_assertEqual(27,      utils:matrix_foldl(fun(_,C,V,A    ) -> A+C*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
+        ?_assertEqual({156,5}, utils:matrix_foldl(fun(R,C,V,{A,M}) -> {A+M*C*R*V, M+1} end, {0, 1}, #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
+        ?_assertEqual(ok, ok)
     ].

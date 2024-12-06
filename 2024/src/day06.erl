@@ -1,52 +1,25 @@
 -module(day06).
 -export([solve_1/1, solve_2/1]).
 
-% TODO
+% Užduotis, ypač pirmoji, nesudėtinga. Privertė pasidaryti darbo su dvimačiais
+% masyvais pagalbines funkcijas. Antroje dalyje dariau pačiu primityviausiu
+% perrinkimo būdu, supratau, kad kiek per ilgai trunka, tada truputį pagalvojau
+% ir dėžes dėjau tik į tas vietas, kuriomis sargas tikrai vaikšto. Tai sumažino
+% paiešką 3-4 kartus, o to užteko, kad programa sutilptų į 3 su trupučiu minutės.
 
 % (aoc_2024@JuliusErisataT14.erisata.lt)1> day06:solve_1("priv/day06-PVZ.txt").
-% 143
-% (aoc_2024@JuliusErisataT14.erisata.lt)2> day05:solve_1("priv/day05.txt").
-% 5955
-% (aoc_2024@JuliusErisataT14.erisata.lt)3> day05:solve_2("priv/day05-PVZ.txt").
-% 123
-% (aoc_2024@JuliusErisataT14.erisata.lt)4> day05:solve_2("priv/day05.txt").
-% 4030
+% 41
+% (aoc_2024@JuliusErisataT14.erisata.lt)2> day06:solve_1("priv/day06.txt").
+% 4982
+% (aoc_2024@JuliusErisataT14.erisata.lt)3> day06:solve_2("priv/day06-PVZ.txt").
+% 6
+% (aoc_2024@JuliusErisataT14.erisata.lt)4> day06:solve_2("priv/day06.txt").
+% 1663
 
 
 read_inputs(FileName) ->
     MapLines = lists:reverse(utils:read_lines_no_new_line(FileName)),
-    [FirstLine|_] = MapLines,
-    Cols = erlang:length(FirstLine),
-    {Rows1, Map} = lists:foldl(fun(Line, {Row, Acc}) ->
-        {Cols1, NewAcc} = lists:foldl(fun(Pos, {Col, Accc}) ->
-            NewAccc = Accc#{{Row, Col} => Pos},
-            {Col+1, NewAccc}
-        end, {1, Acc}, Line),
-        Cols = Cols1-1,
-        {Row+1,NewAcc}
-    end, {1, #{}}, MapLines),
-    {Map, Rows1-1, Cols}.
-
-
-find_in_map(Elem, Map) ->
-    FindValueFun = fun FindValueFun(It) ->
-        case maps:next(It) of
-            {Location, Elem, _     } -> Location;
-            {_,        _,    NextIt} -> FindValueFun(NextIt);
-            none                     -> undefined
-        end
-    end,
-    FindValueFun(maps:iterator(Map)).
-
-
-next_index(_Rows, _Cols,  1,    _Col,  up   ) -> undefined;
-next_index(_Rows, _Cols,  Row,   Col,  up   ) -> {Row-1, Col};
-next_index(_Rows,  Cols, _Row,   Cols, right) -> undefined;
-next_index(_Rows, _Cols,  Row,   Col,  right) -> {Row, Col+1};
-next_index( Rows, _Cols,  Rows, _Col,  down ) -> undefined;
-next_index(_Rows, _Cols,  Row,   Col,  down ) -> {Row+1, Col};
-next_index(_Rows, _Cols, _Row,   1,    left ) -> undefined;
-next_index(_Rows, _Cols,  Row,   Col,  left ) -> {Row, Col-1}.
+    utils:get_char_matrix(MapLines).
 
 
 turn(up   ) -> right;
@@ -55,17 +28,8 @@ turn(down ) -> left;
 turn(left ) -> up.
 
 
-print_map(Map, Rows, Cols) ->
-    lists:foreach(fun(Row) ->
-        lists:foreach(fun(Col) ->
-            io:fwrite("~s", [[maps:get({Row, Col}, Map)]])
-        end, lists:seq(1, Cols)),
-        io:fwrite("~n")
-    end, lists:seq(1, Rows)).
-
-
 walk_map(Map, Rows, Cols, AccStepCount, [{Row, Col, Direction}|_] = AccPath) ->
-    Next = next_index(Rows, Cols, Row, Col, Direction),
+    Next = utils:matrix_next_index(Row, Col, Direction, Rows, Cols),
     case Next of
         undefined ->
             {AccStepCount, Map#{{Row, Col} => $X}};
@@ -89,33 +53,24 @@ walk_map(Map, Rows, Cols, AccStepCount, [{Row, Col, Direction}|_] = AccPath) ->
 
 solve_1(FileName) ->
     {Map, Rows, Cols} = read_inputs(FileName),
-    %print_map(Map, Rows, Cols),
-    {Row, Col} = find_in_map($^, Map),
+    {Row, Col} = utils:matrix_index_of($^, Map),
     MapNoS = Map#{{Row, Col} => $X},
-    %utils:print("Start: ~p ~p", [Row, Col]),
     {StepCount, _} = walk_map(MapNoS, Rows, Cols, 1, [{Row, Col, up}]),
     StepCount.
 
 
 solve_2(FileName) ->
     {Map, Rows, Cols} = read_inputs(FileName),
-    {RowS, ColS} = find_in_map($^, Map),
+    {RowS, ColS} = utils:matrix_index_of($^, Map),
     MapNoS = Map#{{RowS, ColS} => $X},
     {_, MapWalked} = walk_map(MapNoS, Rows, Cols, 1, [{RowS, ColS, up}]),
-    print_map(MapWalked, Rows, Cols),
-    lists:foldl(fun(Row, Acc) ->
-        lists:foldl(fun(Col, Accc) ->
-            %utils:print("XXX ~p ~p", [Row, Col]),
-            case maps:get({Row, Col}, MapWalked) of
-                $^ -> Accc;
-                $# -> Accc;
-                $. -> Accc;
-                $X ->
-                    MapNewOb = MapNoS#{{Row, Col} => $#},
-                    case walk_map(MapNewOb, Rows, Cols, 0, [{RowS, ColS, up}]) of
-                        loop -> utils:print("XXX ~p ~p", [Row, Col]), Accc+1;
-                        _    -> Accc
-                    end
+    utils:matrix_foldl(fun
+        (_,   _,   $#, Acc) -> Acc;
+        (_,   _,   $., Acc) -> Acc;
+        (Row, Col, $X, Acc) ->
+            MapNewOb = MapNoS#{{Row, Col} => $#},
+            case walk_map(MapNewOb, Rows, Cols, 1, [{RowS, ColS, up}]) of
+                loop -> Acc+1;
+                _    -> Acc
             end
-        end, Acc, lists:seq(1, Cols))
-    end, 0, lists:seq(1, Rows)).
+    end, 0, MapWalked, Rows, Cols).
