@@ -15,6 +15,7 @@
 -export([is_decreasing/2, is_increasing/2]).
 -export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1]).
 -export([matrix_index_of/2, matrix_next_index/5, matrix_foldl/5]).
+-export([concat_integers/2]).
 
 
 -type matrix(Type) :: #{{integer(), integer()} => Type}.
@@ -469,3 +470,18 @@ matrix_foldl(FoldFun, AccIn, Matrix, Rows, Cols) ->
             FoldFun(Row, Col, maps:get({Row, Col}, Matrix), Accc)
         end, Acc, lists:seq(1, Cols))
     end, AccIn, lists:seq(1, Rows)).
+
+
+%%
+%%  Returns an integer, which results from concating second parameter to the end
+%%  of the first parameter, e.g. 123 and 456 results in 123456.
+%%
+-spec concat_integers(integer(), integer()) -> integer().
+
+concat_integers(Int1, 0) when Int1>0 ->
+    Int1*10;
+
+concat_integers(Int1, Int2) when Int1>0, Int2>0 ->
+    Power = erlang:round(math:floor(math:log10(Int2))) + 1,
+    Power10 = erlang:list_to_integer(lists:append(["1"|lists:duplicate(Power, "0")])),
+    Int1 * Power10 + Int2.

@@ -178,6 +178,17 @@ matrix_foldl_test_() ->
         ?_assertEqual(ok,      utils:matrix_foldl(fun(_,_,_,_    ) -> fail             end, ok,     #{}, 0, 0          )),
         ?_assertEqual(29,      utils:matrix_foldl(fun(R,_,V,A    ) -> A+R*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
         ?_assertEqual(27,      utils:matrix_foldl(fun(_,C,V,A    ) -> A+C*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
-        ?_assertEqual({156,5}, utils:matrix_foldl(fun(R,C,V,{A,M}) -> {A+M*C*R*V, M+1} end, {0, 1}, #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
-        ?_assertEqual(ok, ok)
+        ?_assertEqual({156,5}, utils:matrix_foldl(fun(R,C,V,{A,M}) -> {A+M*C*R*V, M+1} end, {0, 1}, #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2))
+    ].
+
+
+concat_integers_test_() ->
+    [
+        ?_assertEqual(10,                             utils:concat_integers(1,            0      )),
+        ?_assertEqual(321,                            utils:concat_integers(32,           1      )),
+        ?_assertEqual(321,                            utils:concat_integers(3,            21     )),
+        ?_assertEqual(999,                            utils:concat_integers(9,            99     )),
+        ?_assertEqual(999,                            utils:concat_integers(99,           9      )),
+        ?_assertEqual(12345678901234567890,           utils:concat_integers(1234567890123,4567890)),
+        ?_assertEqual(123456789012345678901234567890, utils:concat_integers(1,23456789012345678901234567890))
     ].
