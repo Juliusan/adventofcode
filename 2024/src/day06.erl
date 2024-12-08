@@ -28,49 +28,49 @@ turn(down ) -> left;
 turn(left ) -> up.
 
 
-walk_map(Map, Rows, Cols, AccStepCount, [{Row, Col, Direction}|_] = AccPath) ->
-    Next = utils:matrix_next_index(Row, Col, Direction, Rows, Cols),
+walk_map(Map, Dimensions, AccStepCount, [{Index, Direction}|_] = AccPath) ->
+    Next = utils:matrix_next_index(Index, Direction, Dimensions),
     case Next of
         undefined ->
-            {AccStepCount, Map#{{Row, Col} => $X}};
-        {RowN, ColN} ->
-            {Step, NewAccStepCount} = case maps:get({RowN, ColN}, Map) of
+            {AccStepCount, Map#{Index => $X}};
+        IndexN ->
+            {Step, NewAccStepCount} = case maps:get(IndexN, Map) of
                 $. -> {go,   AccStepCount+1};
                 $X -> {go,   AccStepCount};
                 $# -> {turn, AccStepCount}
             end,
             NextPathElem = case Step of
-                go   ->                                 {RowN, ColN, Direction};
-                turn -> NewDirection = turn(Direction), {Row,  Col,  NewDirection}
+                go   ->                                 {IndexN, Direction};
+                turn -> NewDirection = turn(Direction), {Index,  NewDirection}
             end,
             case lists:member(NextPathElem, AccPath) of
                 true  -> loop;
-                false -> walk_map(Map#{{Row, Col} => $X}, Rows, Cols, NewAccStepCount, [NextPathElem|AccPath])
+                false -> walk_map(Map#{Index => $X}, Dimensions, NewAccStepCount, [NextPathElem|AccPath])
             end
     end.
 
 
 
 solve_1(FileName) ->
-    {Map, Rows, Cols} = read_inputs(FileName),
-    {Row, Col} = utils:matrix_index_of($^, Map),
-    MapNoS = Map#{{Row, Col} => $X},
-    {StepCount, _} = walk_map(MapNoS, Rows, Cols, 1, [{Row, Col, up}]),
+    {Map, Dimensions} = read_inputs(FileName),
+    IndexS = utils:matrix_index_of($^, Map),
+    MapNoS = Map#{IndexS => $X},
+    {StepCount, _} = walk_map(MapNoS, Dimensions, 1, [{IndexS, up}]),
     StepCount.
 
 
 solve_2(FileName) ->
-    {Map, Rows, Cols} = read_inputs(FileName),
-    {RowS, ColS} = utils:matrix_index_of($^, Map),
-    MapNoS = Map#{{RowS, ColS} => $X},
-    {_, MapWalked} = walk_map(MapNoS, Rows, Cols, 1, [{RowS, ColS, up}]),
+    {Map, Dimensions} = read_inputs(FileName),
+    IndexS = utils:matrix_index_of($^, Map),
+    MapNoS = Map#{IndexS => $X},
+    {_, MapWalked} = walk_map(MapNoS, Dimensions, 1, [{IndexS, up}]),
     utils:matrix_foldl(fun
-        (_,   _,   $#, Acc) -> Acc;
-        (_,   _,   $., Acc) -> Acc;
-        (Row, Col, $X, Acc) ->
-            MapNewOb = MapNoS#{{Row, Col} => $#},
-            case walk_map(MapNewOb, Rows, Cols, 1, [{RowS, ColS, up}]) of
+        (_,     $#, Acc) -> Acc;
+        (_,     $., Acc) -> Acc;
+        (Index, $X, Acc) ->
+            MapNewOb = MapNoS#{Index => $#},
+            case walk_map(MapNewOb, Dimensions, 1, [{IndexS, up}]) of
                 loop -> Acc+1;
                 _    -> Acc
             end
-    end, 0, MapWalked, Rows, Cols).
+    end, 0, MapWalked, Dimensions).

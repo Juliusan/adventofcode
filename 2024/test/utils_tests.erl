@@ -38,15 +38,15 @@ get_integer_list_test_() ->
 
 get_char_matrix_test_() ->
     [
-        ?_assertEqual({#{},                              0, 0}, utils:get_char_matrix([])),
-        ?_assertEqual({#{{1,1}=>$a},                     1, 1}, utils:get_char_matrix(["a"])),
-        ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c}, 1, 3}, utils:get_char_matrix(["abc"])),
-        ?_assertEqual({#{{1,1}=>$a,{2,1}=>$b},           2, 1}, utils:get_char_matrix(["a", "b"])),
+        ?_assertEqual({#{},                              {0, 0}}, utils:get_char_matrix([])),
+        ?_assertEqual({#{{1,1}=>$a},                     {1, 1}}, utils:get_char_matrix(["a"])),
+        ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c}, {1, 3}}, utils:get_char_matrix(["abc"])),
+        ?_assertEqual({#{{1,1}=>$a,{2,1}=>$b},           {2, 1}}, utils:get_char_matrix(["a", "b"])),
         ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c,
-                         {2,1}=>$d,{2,2}=>$e,{2,3}=>$f}, 2, 3}, utils:get_char_matrix(["abc","def"])),
+                         {2,1}=>$d,{2,2}=>$e,{2,3}=>$f}, {2, 3}}, utils:get_char_matrix(["abc","def"])),
         ?_assertEqual({#{{1,1}=>$a,{1,2}=>$b,{1,3}=>$c,
                          {2,1}=>$d,{2,2}=>$e,{2,3}=>$f,
-                         {3,1}=>$g,{3,2}=>$h,{3,3}=>$i}, 3, 3}, utils:get_char_matrix(["abc","def","ghi"]))
+                         {3,1}=>$g,{3,2}=>$h,{3,3}=>$i}, {3, 3}}, utils:get_char_matrix(["abc","def","ghi"]))
     ].
 
 
@@ -162,6 +162,16 @@ middle_single_test_() ->
     ].
 
 
+foldl_pairs_test_() ->
+    [
+        ?_assertEqual(ok,                                    utils:foldl_pairs(fun(_,  _,  _) -> fail end,         ok, [       ])),
+        ?_assertEqual(ok,                                    utils:foldl_pairs(fun(_,  _,  _) -> fail end,         ok, [1      ])),
+        ?_assertEqual([                              {1,2}], utils:foldl_pairs(fun(E1, E2, A) -> [{E1, E2}|A] end, [], [1,2    ])),
+        ?_assertEqual([            {2,3},      {1,3},{1,2}], utils:foldl_pairs(fun(E1, E2, A) -> [{E1, E2}|A] end, [], [1,2,3  ])),
+        ?_assertEqual([{3,4},{2,4},{2,3},{1,4},{1,3},{1,2}], utils:foldl_pairs(fun(E1, E2, A) -> [{E1, E2}|A] end, [], [1,2,3,4]))
+    ].
+
+
 matrix_index_of_test_() ->
     [
         ?_assertEqual(undefined, utils:matrix_index_of(a, #{}          )),
@@ -173,12 +183,75 @@ matrix_index_of_test_() ->
     ].
 
 
+matrix_is_valid_index_test_() ->
+    [
+        ?_assertEqual(true,  utils:matrix_is_valid_index({2,3}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({1,1}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({1,5}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({1,8}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({5,8}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({8,8}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({8,5}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({8,1}, {8,8})),
+        ?_assertEqual(true,  utils:matrix_is_valid_index({5,1}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({0,0}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({0,5}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({0,9}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({5,9}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({9,9}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({9,5}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({9,0}, {8,8})),
+        ?_assertEqual(false, utils:matrix_is_valid_index({5,0}, {8,8}))
+    ].
+
+
+matrix_next_index_test_() ->
+    [
+        ?_assertEqual({1,3},     utils:matrix_next_index({2,3}, up,    {8,8})),
+        ?_assertEqual({2,4},     utils:matrix_next_index({2,3}, right, {8,8})),
+        ?_assertEqual({3,3},     utils:matrix_next_index({2,3}, down,  {8,8})),
+        ?_assertEqual({2,2},     utils:matrix_next_index({2,3}, left,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({1,1}, up,    {8,8})),
+        ?_assertEqual({1,2},     utils:matrix_next_index({1,1}, right, {8,8})),
+        ?_assertEqual({2,1},     utils:matrix_next_index({1,1}, down,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({1,1}, left,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({1,5}, up,    {8,8})),
+        ?_assertEqual({1,6},     utils:matrix_next_index({1,5}, right, {8,8})),
+        ?_assertEqual({2,5},     utils:matrix_next_index({1,5}, down,  {8,8})),
+        ?_assertEqual({1,4},     utils:matrix_next_index({1,5}, left,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({1,8}, up,    {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({1,8}, right, {8,8})),
+        ?_assertEqual({2,8},     utils:matrix_next_index({1,8}, down,  {8,8})),
+        ?_assertEqual({1,7},     utils:matrix_next_index({1,8}, left,  {8,8})),
+        ?_assertEqual({4,8},     utils:matrix_next_index({5,8}, up,    {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({5,8}, right, {8,8})),
+        ?_assertEqual({6,8},     utils:matrix_next_index({5,8}, down,  {8,8})),
+        ?_assertEqual({5,7},     utils:matrix_next_index({5,8}, left,  {8,8})),
+        ?_assertEqual({7,8},     utils:matrix_next_index({8,8}, up,    {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({8,8}, right, {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({8,8}, down,  {8,8})),
+        ?_assertEqual({8,7},     utils:matrix_next_index({8,8}, left,  {8,8})),
+        ?_assertEqual({7,5},     utils:matrix_next_index({8,5}, up,    {8,8})),
+        ?_assertEqual({8,6},     utils:matrix_next_index({8,5}, right, {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({8,5}, down,  {8,8})),
+        ?_assertEqual({8,4},     utils:matrix_next_index({8,5}, left,  {8,8})),
+        ?_assertEqual({7,1},     utils:matrix_next_index({8,1}, up,    {8,8})),
+        ?_assertEqual({8,2},     utils:matrix_next_index({8,1}, right, {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({8,1}, down,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({8,1}, left,  {8,8})),
+        ?_assertEqual({4,1},     utils:matrix_next_index({5,1}, up,    {8,8})),
+        ?_assertEqual({5,2},     utils:matrix_next_index({5,1}, right, {8,8})),
+        ?_assertEqual({6,1},     utils:matrix_next_index({5,1}, down,  {8,8})),
+        ?_assertEqual(undefined, utils:matrix_next_index({5,1}, left,  {8,8}))
+    ].
+
+
 matrix_foldl_test_() ->
     [
-        ?_assertEqual(ok,      utils:matrix_foldl(fun(_,_,_,_    ) -> fail             end, ok,     #{}, 0, 0          )),
-        ?_assertEqual(29,      utils:matrix_foldl(fun(R,_,V,A    ) -> A+R*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
-        ?_assertEqual(27,      utils:matrix_foldl(fun(_,C,V,A    ) -> A+C*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2)),
-        ?_assertEqual({156,5}, utils:matrix_foldl(fun(R,C,V,{A,M}) -> {A+M*C*R*V, M+1} end, {0, 1}, #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, 2, 2))
+        ?_assertEqual(ok,      utils:matrix_foldl(fun(_,    _,_    ) -> fail             end, ok,     #{},                                    {0, 0})),
+        ?_assertEqual(29,      utils:matrix_foldl(fun({R,_},V,A    ) -> A+R*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, {2, 2})),
+        ?_assertEqual(27,      utils:matrix_foldl(fun({_,C},V,A    ) -> A+C*V            end, 0,      #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, {2, 2})),
+        ?_assertEqual({156,5}, utils:matrix_foldl(fun({R,C},V,{A,M}) -> {A+M*C*R*V, M+1} end, {0, 1}, #{{1,1}=>2,{1,2}=>3,{2,1}=>5,{2,2}=>7}, {2, 2}))
     ].
 
 
