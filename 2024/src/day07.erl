@@ -22,12 +22,13 @@ read_line(LineNoNL) ->
     {Result, Numbers}.
 
 
-correct_result({Result, [NR1|Numbers]}, DoConcat) ->
-    AllResults = all_results([NR1], Numbers, [], DoConcat),
+correct_result({Result, [Nr1|Numbers]}, DoConcat) ->
+    AllResults = all_results([Nr1], Numbers, [], DoConcat),
     case lists:member(Result, AllResults) of
         true  -> Result;
         false -> 0
     end.
+
 
 all_results(Nrs,      [],           _,   _       ) -> Nrs;
 all_results([],       [_|Numbers],  Acc, DoConcat) -> all_results(Acc, Numbers, [], DoConcat);
@@ -38,7 +39,6 @@ all_results([Nr1|Nrs],[Nr2|Numbers],Acc, DoConcat) ->
         true  -> [utils:concat_integers(Nr1, Nr2) | NewResults1]
     end,
     all_results(Nrs, [Nr2|Numbers], NewResults2 ++ Acc, DoConcat).
-
 
 
 solve_1(FileName) ->
