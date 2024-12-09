@@ -2,6 +2,8 @@
 -export([print/2, print_char_matrix/2]).
 -export([
     read_file/1,
+    read_only_line/1,
+    read_only_line_no_new_line/1,
     read_lines/1,
     read_lines_no_new_line/1,
     read_lines_to_elems/2,
@@ -65,6 +67,34 @@ read_file(FileName) ->
     Lines = read_lines(FileName),
     LinesR = lists:reverse(Lines),
     lists:append(LinesR).
+
+
+%%
+%%  Reads file FileName and returns the single line of the file.
+%%  Crashes if the file contains more than one line.
+%%
+-spec read_only_line(
+    FileName :: string()
+) ->
+    Line :: string().
+
+read_only_line(FileName) ->
+    [Line] = read_lines(FileName),
+    Line.
+
+
+%%
+%%  Reads file FileName and returns the single line of the file without new
+%%  line in the end. Crashes if the file contains more than one line.
+%%
+-spec read_only_line_no_new_line(
+    FileName :: string()
+) ->
+    Line :: string().
+
+read_only_line_no_new_line(FileName) ->
+    [Line] = read_lines_no_new_line(FileName),
+    Line.
 
 
 %%
