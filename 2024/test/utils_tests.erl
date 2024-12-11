@@ -255,13 +255,58 @@ matrix_foldl_test_() ->
     ].
 
 
+integer_digit_count_test_() ->
+    [
+        ?_assertEqual(1,  utils:integer_digit_count(                                        1)),
+        ?_assertEqual(1,  utils:integer_digit_count(                                        2)),
+        ?_assertEqual(1,  utils:integer_digit_count(                                        9)),
+        ?_assertEqual(2,  utils:integer_digit_count(                                       10)),
+        ?_assertEqual(2,  utils:integer_digit_count(                                       28)),
+        ?_assertEqual(2,  utils:integer_digit_count(                                       98)),
+        ?_assertEqual(2,  utils:integer_digit_count(                                       99)),
+        ?_assertEqual(3,  utils:integer_digit_count(                                      100)),
+        ?_assertEqual(3,  utils:integer_digit_count(                                      999)),
+        ?_assertEqual(4,  utils:integer_digit_count(                                    1_000)),
+        ?_assertEqual(15, utils:integer_digit_count(                      999_999_999_999_999)),
+        ?_assertEqual(16, utils:integer_digit_count(                    1_000_000_000_000_000)),
+        ?_assertEqual(30, utils:integer_digit_count(  999_999_999_999_999_999_999_999_999_999)),
+        ?_assertEqual(31, utils:integer_digit_count(1_000_000_000_000_000_000_000_000_000_000))
+    ].
+
+
+integer_10_pow_test_() ->
+    [
+        ?_assertEqual(1,                                         utils:integer_10_pow( 0)),
+        ?_assertEqual(10,                                        utils:integer_10_pow( 1)),
+        ?_assertEqual(100,                                       utils:integer_10_pow( 2)),
+        ?_assertEqual(1_000,                                     utils:integer_10_pow( 3)),
+        ?_assertEqual(10_000_000_000,                            utils:integer_10_pow(10)),
+        ?_assertEqual(100_000_000_000_000_000_000,               utils:integer_10_pow(20)),
+        ?_assertEqual(1_000_000_000_000_000_000_000_000_000_000, utils:integer_10_pow(30)),
+        ?_assert(true)
+    ].
+
+
 concat_integers_test_() ->
     [
         ?_assertEqual(10,                             utils:concat_integers(1,            0      )),
-        ?_assertEqual(321,                            utils:concat_integers(32,           1      )),
         ?_assertEqual(321,                            utils:concat_integers(3,            21     )),
+        ?_assertEqual(321,                            utils:concat_integers(32,           1      )),
         ?_assertEqual(999,                            utils:concat_integers(9,            99     )),
         ?_assertEqual(999,                            utils:concat_integers(99,           9      )),
-        ?_assertEqual(12345678901234567890,           utils:concat_integers(1234567890123,4567890)),
+        ?_assertEqual(12345678901234567890,           utils:concat_integers(1234567890123,4567890          )),
         ?_assertEqual(123456789012345678901234567890, utils:concat_integers(1,23456789012345678901234567890))
+    ].
+
+
+split_integer_test_() ->
+    [
+        ?_assertEqual({1,            0      },           utils:split_integer(10,                            1 )),
+        ?_assertEqual({32,           1      },           utils:split_integer(321,                           1 )),
+        ?_assertEqual({3,            21     },           utils:split_integer(321,                           2 )),
+        ?_assertEqual({99,           9      },           utils:split_integer(999,                           1 )),
+        ?_assertEqual({9,            99     },           utils:split_integer(999,                           2 )),
+        ?_assertEqual({1234567890123,4567890},           utils:split_integer(12345678901234567890,          7 )),
+        ?_assertEqual({12345678901234567890123456789,0}, utils:split_integer(123456789012345678901234567890,1 )),
+        ?_assertEqual({1,23456789012345678901234567890}, utils:split_integer(123456789012345678901234567890,29))
     ].

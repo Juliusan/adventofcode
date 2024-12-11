@@ -27,9 +27,9 @@ read_stones(FileName) ->
 
 blink_stone(0) -> [1];
 blink_stone(Stone) ->
-    Digits = erlang:round(math:floor(math:log10(Stone))) + 1,
+    Digits = utils:integer_digit_count(Stone),
     case Digits rem 2 of
-        0 -> Split = erlang:list_to_integer(lists:append(["1"|lists:duplicate(Digits div 2, "0")])), [Stone div Split, Stone rem Split];
+        0 -> erlang:tuple_to_list(utils:split_integer(Stone, Digits div 2));
         _ -> [Stone*2024]
     end.
 

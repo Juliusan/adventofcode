@@ -17,12 +17,16 @@
 -export([is_decreasing/2, is_increasing/2]).
 -export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1, foldl_pairs/3]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
--export([concat_integers/2]).
+-export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
 
 
 -type matrix(Type) :: #{matrix_index() => Type}.
 -type matrix_index() :: {Row :: integer(), Column :: integer()}.
 -type matrix_direction() :: up | right | down | left.
+
+
+-define(CUT_INTEGER,       1_000_000_000_000).
+-define(CUT_INTEGER_POWER, 12).
 
 
 %%
@@ -553,8 +557,36 @@ matrix_foldl(FoldFun, AccIn, Matrix, {Rows, Cols}) ->
 
 
 %%
-%%  Returns an integer, which results from concating second parameter to the end
-%%  of the first parameter, e.g. 123 and 456 results in 123456.
+%%  Returns the number of digits in non negative integer.
+%%  NOTE: the last case is needed, because `math:log10/1` function returns
+%%  float, which has to be converted back to integer and this results in loss
+%%  of precision.
+%%
+-spec integer_digit_count(integer()) -> integer().
+
+integer_digit_count(0) -> 1;
+integer_digit_count(Int) when 0 < Int, Int <  ?CUT_INTEGER -> erlang:floor(math:log10(Int)) + 1;
+integer_digit_count(Int) when          Int >= ?CUT_INTEGER -> ?CUT_INTEGER_POWER + integer_digit_count(Int div ?CUT_INTEGER).
+
+
+%%
+%%  Returns Power'th power of 10 (10^Power). This function differs from
+%%  `math:pow/2` as it returns an integer.
+%%  NOTE: the last case is needed, because `math:pow/2` function returns float,
+%%  which has to be converted back to integer and this results in loss of
+%%  precision.
+%%  NOTE: other implementation was considered, but it is much slower:
+%%      `erlang:list_to_integer(lists:append(["1"|lists:duplicate(Power, "0")]))`
+%%
+-spec integer_10_pow(integer()) -> integer().
+
+integer_10_pow(Power) when 0 =< Power, Power <  ?CUT_INTEGER_POWER -> erlang:round(math:pow(10, Power));
+integer_10_pow(Power) when             Power >= ?CUT_INTEGER_POWER -> integer_10_pow(Power-?CUT_INTEGER_POWER) * ?CUT_INTEGER.
+
+
+%%
+%%  Returns an integer, which results from concatenating second parameter to
+%%  the end of the first parameter, e.g. 123 and 456 results in 123456.
 %%
 -spec concat_integers(integer(), integer()) -> integer().
 
@@ -562,6 +594,22 @@ concat_integers(Int1, 0) when Int1>0 ->
     Int1*10;
 
 concat_integers(Int1, Int2) when Int1>0, Int2>0 ->
-    Power = erlang:round(math:floor(math:log10(Int2))) + 1,
-    Power10 = erlang:list_to_integer(lists:append(["1"|lists:duplicate(Power, "0")])),
-    Int1 * Power10 + Int2.
+    Power = integer_digit_count(Int2),
+    Int1 * integer_10_pow(Power) + Int2.
+
+
+%%
+%%  Splits integer Int into two integers, so that the second integer contains
+%%  Split last digits of the initial integer and the first integer contains the
+%%  rest digits of Int. Returns `undefined`, if Int does not contain more
+%%  digits than Split.
+%%
+-spec split_integer(Int :: integer(), Split :: integer()) ->
+    {integer(), integer()} | undefined.
+
+split_integer(Int, Split) when Int > 9, Split > 0 ->
+    Power = integer_10_pow(Split),
+    case Int >= Power of
+        true  -> {Int div Power, Int rem Power};
+        false -> undefined
+    end.
