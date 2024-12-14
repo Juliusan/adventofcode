@@ -175,6 +175,30 @@ foldl_pairs_test_() ->
     ].
 
 
+list_map_sum_test_() ->
+    [
+        ?_assertEqual(0,  utils:list_map_sum(fun(A) -> A-$0 end, [              ])),
+        ?_assertEqual(1,  utils:list_map_sum(fun(A) -> A-$0 end, [$1            ])),
+        ?_assertEqual(10, utils:list_map_sum(fun(A) -> A-$0 end, [$1, $2, $3, $4]))
+    ].
+
+
+list_foldl_sum_test_() ->
+    [
+        ?_assertEqual({0, 10}, utils:list_foldl_sum(fun(A, B) -> {B*(A-$0), B-1} end, 10, [              ])),
+        ?_assertEqual({10, 9}, utils:list_foldl_sum(fun(A, B) -> {B*(A-$0), B-1} end, 10, [$1            ])),
+        ?_assertEqual({80, 6}, utils:list_foldl_sum(fun(A, B) -> {B*(A-$0), B-1} end, 10, [$1, $2, $3, $4]))
+    ].
+
+
+map_map_sum_test_() ->
+    [
+        ?_assertEqual(0,  utils:map_map_sum(fun(K, V) -> K*V end, #{})),
+        ?_assertEqual(10, utils:map_map_sum(fun(K, V) -> K*V end, #{1 => 10})),
+        ?_assertEqual(80, utils:map_map_sum(fun(K, V) -> K*V end, #{1 => 10, 2 => 9, 3 => 8, 4 => 7}))
+    ].
+
+
 matrix_index_of_test_() ->
     [
         ?_assertEqual(undefined, utils:matrix_index_of(a, #{}          )),
@@ -312,4 +336,38 @@ split_integer_test_() ->
         ?_assertEqual({1234567890123,4567890},           utils:split_integer(12345678901234567890,          7 )),
         ?_assertEqual({12345678901234567890123456789,0}, utils:split_integer(123456789012345678901234567890,1 )),
         ?_assertEqual({1,23456789012345678901234567890}, utils:split_integer(123456789012345678901234567890,29))
+    ].
+
+
+euclidean_div_test_() ->
+    [
+        ?_assertEqual( 2, utils:euclidean_div( 7,  3)),
+        ?_assertEqual(-2, utils:euclidean_div( 7, -3)),
+        ?_assertEqual(-3, utils:euclidean_div(-7,  3)),
+        ?_assertEqual( 3, utils:euclidean_div(-7, -3)),
+        ?_assertEqual( 2, utils:euclidean_div( 8,  3)),
+        ?_assertEqual(-2, utils:euclidean_div( 8, -3)),
+        ?_assertEqual(-3, utils:euclidean_div(-8,  3)),
+        ?_assertEqual( 3, utils:euclidean_div(-8, -3)),
+        ?_assertEqual( 3, utils:euclidean_div( 9,  3)),
+        ?_assertEqual(-3, utils:euclidean_div( 9, -3)),
+        ?_assertEqual(-3, utils:euclidean_div(-9,  3)),
+        ?_assertEqual( 3, utils:euclidean_div(-9, -3))
+    ].
+
+
+euclidean_rem_test_() ->
+    [
+        ?_assertEqual(1, utils:euclidean_rem( 7,  3)),
+        ?_assertEqual(1, utils:euclidean_rem( 7, -3)),
+        ?_assertEqual(2, utils:euclidean_rem(-7,  3)),
+        ?_assertEqual(2, utils:euclidean_rem(-7, -3)),
+        ?_assertEqual(2, utils:euclidean_rem( 8,  3)),
+        ?_assertEqual(2, utils:euclidean_rem( 8, -3)),
+        ?_assertEqual(1, utils:euclidean_rem(-8,  3)),
+        ?_assertEqual(1, utils:euclidean_rem(-8, -3)),
+        ?_assertEqual(0, utils:euclidean_rem( 9,  3)),
+        ?_assertEqual(0, utils:euclidean_rem( 9, -3)),
+        ?_assertEqual(0, utils:euclidean_rem(-9,  3)),
+        ?_assertEqual(0, utils:euclidean_rem(-9, -3))
     ].

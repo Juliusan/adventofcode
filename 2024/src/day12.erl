@@ -55,106 +55,93 @@ get_region(Name, Index, Map, Dimensions, AccRegion, AccWalked) ->
     case maps:get(Index, AccWalked, undefined) of
         undefined ->
             NextIndexes = lists:map(fun(Direction) -> utils:matrix_next_index(Index, Direction, Dimensions) end, [up, right, down, left]),
-            lists:foldl(fun
-                (undefined, {AccR, AccW}) -> {AccR, AccW};
-                (NextIndex, {AccR, AccW}) ->
-                    case maps:get(NextIndex, Map) of
-                        Name -> get_region(Name, NextIndex, Map, Dimensions, AccR, AccW);
-                        _    -> {AccR, AccW}
-                    end
+            lists:foldl(fun(NextIndex, {AccR, AccW}) ->
+                case is_tile_suitable(NextIndex, Name, Map) of
+                    true -> get_region(Name, NextIndex, Map, Dimensions, AccR, AccW);
+                    _    -> {AccR, AccW}
+                end
             end, {[Index|AccRegion], AccWalked#{Index => true}}, NextIndexes);
         true ->
             {AccRegion, AccWalked}
     end.
 
 
+is_tile_suitable(undefined, _   , _  ) -> false;
+is_tile_suitable(Index,     Name, Map) ->
+    case maps:get(Index, Map) of
+        Name -> true;
+        _    -> false
+    end.
+
+
 count_areas(Regions) ->
-    maps:fold(fun(Region, Indexes, Acc) ->
-        Acc#{Region => erlang:length(Indexes)}
-    end, #{}, Regions).
+    maps:map(fun(_Region, Indexes) ->
+        erlang:length(Indexes)
+    end, Regions).
 
 
 count_perimeters(Regions, Map, Dimensions) ->
-    maps:fold(fun({_, Name} = Region, Indexes, Acc) ->
-        Perimeter = lists:foldl(fun(Index, Accc) ->
+    maps:map(fun({_, Name}, Indexes) ->
+        utils:list_map_sum(fun(Index) ->
             NextIndexes = lists:map(fun(Direction) -> utils:matrix_next_index(Index, Direction, Dimensions) end, [up, right, down, left]),
-            Count = lists:foldl(fun
-                (undefined, Acccc) -> Acccc+1;
-                (NextIndex, Acccc) ->
-                    case maps:get(NextIndex, Map) of
-                        Name -> Acccc;
-                        _    -> Acccc+1
-                    end
-            end, 0, NextIndexes),
-            %utils:print("XXX ~s ~p ~p", [[Elem], Index, Count]),
-            Accc + Count
-        end, 0, Indexes),
-        Acc#{Region => Perimeter}
-    end, #{}, Regions).
+            utils:list_map_sum(fun(NextIndex) ->
+                case is_tile_suitable(NextIndex, Name, Map) of
+                    true  -> 0;
+                    false -> 1
+                end
+            end, NextIndexes)
+        end, Indexes)
+    end, Regions).
 
 
 count_sides(Regions, Map, Dimensions) ->
-    maps:fold(fun({_, Name} = Region, Indexes, Acc) ->
+    maps:map(fun({_, Name}, Indexes) ->
         {RowMapNS, ColMapNS} = lists:foldl(fun({Row, Col}, {AccRowMap, AccColMap}) ->
-            NewAccRowMap = case maps:get(Row, AccRowMap, undefined) of
-                undefined -> AccRowMap#{Row => [Col]};
-                RIndexes  -> AccRowMap#{Row => [Col|RIndexes]}
-            end,
-            NewAccColMap = case maps:get(Col, AccColMap, undefined) of
-                undefined -> AccColMap#{Col => [Row]};
-                CIndexes  -> AccColMap#{Col => [Row|CIndexes]}
-            end,
+            NewAccRowMap = maps:update_with(Row, fun(RCols) -> [Col|RCols] end, [Col], AccRowMap),
+            NewAccColMap = maps:update_with(Col, fun(CRows) -> [Row|CRows] end, [Row], AccColMap),
             {NewAccRowMap, NewAccColMap}
         end, {#{}, #{}}, Indexes),
-        RowMap = maps:map(fun(_, List) -> lists:sort(List) end, RowMapNS),
-        ColMap = maps:map(fun(_, List) -> lists:sort(List) end, ColMapNS),
+        SortValuesFun = fun(_, List) -> lists:sort(List) end,
+        RowMap = maps:map(SortValuesFun, RowMapNS),
+        ColMap = maps:map(SortValuesFun, ColMapNS),
         CountSidesFun = fun(Dim1, Dim2s, MakeIndexFun, SuccDirection, NextDirection) ->
-            {_, _, Count} = lists:foldl(fun(Dim2, {PrevBorder, ExpectedIndex, AccCount}) ->
+            {Count, _} = utils:list_foldl_sum(fun(Dim2, {PrevBorder, ExpectedIndex}) ->
                 Index = MakeIndexFun(Dim1, Dim2),
                 SuccIndex = utils:matrix_next_index(Index, SuccDirection, Dimensions),
-                IsBorder = case SuccIndex of
-                    undefined ->
-                        true;
-                    _ ->
-                        case maps:get(SuccIndex, Map) of
-                            Name      -> false;
-                            _         -> true
-                    end
-                end,
-                NewAccCount = case {Index =:= ExpectedIndex, IsBorder, PrevBorder} of
-                    {true,  true, false    } -> AccCount+1;
-                    {false, true,  _       } -> AccCount+1;
-                    {_,     _,     _       } -> AccCount
+                IsBorder = not(is_tile_suitable(SuccIndex, Name, Map)),
+                AddedValue = case {Index =:= ExpectedIndex, IsBorder, PrevBorder} of
+                    {true,  true, false} -> 1;
+                    {false, true,  _   } -> 1;
+                    {_,     _,     _   } -> 0
                 end,
                 NextIndex = utils:matrix_next_index(Index, NextDirection, Dimensions),
-                {IsBorder, NextIndex, NewAccCount}
-            end, {false, MakeIndexFun(Dim1, 1), 0}, Dim2s),
+                {AddedValue, {IsBorder, NextIndex}}
+            end, {false, MakeIndexFun(Dim1, 1)}, Dim2s),
             %utils:print("XXX region ~p dimension ~p-~p (~p) count ~p", [[Name], Dim1, SuccDirection, Dim2s, Count]),
             Count
         end,
-        RowCount = maps:fold(fun(Row, RowCols, AccCount) ->
+        RowCount = utils:map_map_sum(fun(Row, RowCols) ->
             CountFun = fun(Dir) -> CountSidesFun(Row, RowCols, fun(D1, D2) -> {D1, D2} end, Dir, right) end,
             Count1 = CountFun(up  ),
             Count2 = CountFun(down),
-            AccCount + Count1 + Count2
-        end, 0, RowMap),
-        ColCount = maps:fold(fun(Col, ColRows, AccCount) ->
+            Count1 + Count2
+        end, RowMap),
+        ColCount = utils:map_map_sum(fun(Col, ColRows) ->
             CountFun = fun(Dir) -> CountSidesFun(Col, ColRows, fun(D1, D2) -> {D2, D1} end, Dir, down) end,
             Count1 = CountFun(right),
             Count2 = CountFun(left),
-            AccCount + Count1 + Count2
-        end, 0, ColMap),
-        Acc#{Region => RowCount + ColCount}
-    end, #{}, Regions).
+            Count1 + Count2
+        end, ColMap),
+        RowCount + ColCount
+    end, Regions).
 
 
-count_price(Areas, Perimeters) ->
-    maps:fold(fun({Nr, Name}=Elem, Area, Acc) ->
-        Perimeter = maps:get(Elem, Perimeters),
-        %utils:print("Plot ~p-~s area ~p perimeter ~p", [Nr, [Name], Area, Perimeter]),
-        Price = Area*Perimeter,
-        Acc+Price
-    end, 0, Areas).
+count_price(Areas, Lengths) ->
+    utils:map_map_sum(fun(Elem, Area) ->            % {Nr, Name}=Elem
+        Length = maps:get(Elem, Lengths),
+        %utils:print("Plot ~p-~s area ~p perimeter/side ~p", [Nr, [Name], Area, Length]),
+        Area*Length
+    end, Areas).
 
 
 solve_1(FileName) ->

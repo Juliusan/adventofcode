@@ -10,6 +10,6 @@ test:
 	$(REBAR) eunit --verbose $(EUNIT_ARGS)
 
 run:
-	$(REBAR) as test shell --name "aoc_2024"
+	$(REBAR) as test shell --name "aoc_2024" --apps sync
 
 .PHONY: all compile test run

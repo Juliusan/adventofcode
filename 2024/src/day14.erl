@@ -61,23 +61,6 @@
 % {1035713,6377}
 
 
-
-
-% (aoc_2024@JuliusErisataT14.erisata.lt)1> day14:solve_1("priv/day14-PVZ.txt").
-% (aoc_2024@JuliusErisataT14.erisata.lt)1> day14:solve_2("priv/day14.txt", {101, 103}).
-% 480
-% (aoc_2024@JuliusErisataT14.erisata.lt)2> day13:solve_1("priv/day13.txt").
-% 35082
-% (aoc_2024@JuliusErisataT14.erisata.lt)3> day13:solve_2("priv/day13-PVZ.txt").
-% 875318608908
-% (aoc_2024@JuliusErisataT14.erisata.lt)4> day13:solve_2("priv/day13.txt").
-% 82570698600470
-% (aoc_2024@JuliusErisataT14.erisata.lt)5> timer:tc(fun() -> day13:solve_1("priv/day13.txt") end).
-% {9489,35082}
-% (aoc_2024@JuliusErisataT14.erisata.lt)6> timer:tc(fun() -> day13:solve_2("priv/day13.txt") end).
-% {9967,82570698600470}
-
-
 read_inputs(FileName) ->
     utils:read_lines_to_elems(FileName, fun(Line) ->
         "p=" ++ Line1 = Line,
@@ -89,17 +72,10 @@ read_inputs(FileName) ->
     end).
 
 
-euclidian_rem(A, B) ->
-    case A rem B of
-        Pos when Pos >= 0 -> Pos;
-        Neg               -> Neg+B
-    end.
-
-
 move_robots(Robots, Seconds, {Width, Height}) ->
     lists:map(fun({PosX, PosY, VelX, VelY}) ->
-        NewPosX = euclidian_rem(PosX+VelX*Seconds, Width),
-        NewPosY = euclidian_rem(PosY+VelY*Seconds, Height),
+        NewPosX = utils:euclidean_rem(PosX+VelX*Seconds, Width),
+        NewPosY = utils:euclidean_rem(PosY+VelY*Seconds, Height),
         %utils:print("ROBOT ~p -> ~p", [{PosX, PosY, VelX, VelY}, {NewPosX, NewPosY}]),
         {NewPosX, NewPosY, VelX, VelY}
     end, Robots).

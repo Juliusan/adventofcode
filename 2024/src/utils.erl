@@ -15,9 +15,11 @@
 -export([drop_trailing_new_line/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
--export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1, foldl_pairs/3]).
+-export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1, foldl_pairs/3, list_map_sum/2, list_foldl_sum/3]).
+-export([map_map_sum/2]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
+-export([euclidean_div/2, euclidean_rem/2]).
 
 
 -type matrix(Type) :: #{matrix_index() => Type}.
@@ -443,17 +445,17 @@ middle_single(List) ->
 %%  {2,n},...
 %%
 -spec foldl_pairs(
-    FoldFun :: fun((
-                       Elem1       :: ElemType,
-                       Elem2       :: ElemType,
-                       Accumulator :: AccType
-                   ) ->
-                       NewAccumulator :: AccType
-               ),
-    AccIn   :: AccType,
-    List    :: list(ElemType)
+    FoldFun         :: fun((
+                            Elem1       :: ElemType,
+                            Elem2       :: ElemType,
+                            Accumulator :: AccType
+                        ) ->
+                            NewAccumulator :: AccType
+                    ),
+    InitAccumulator :: AccType,
+    List            :: [ElemType]
 ) ->
-    AccOut :: AccType
+    FinalAccumulator :: AccType
         when
             ElemType :: term(),
             AccType  :: term().
@@ -468,6 +470,69 @@ foldl_pairs(_, AccIn, _, []) -> AccIn;
 foldl_pairs(FoldFun, AccIn, Elem1, [Elem2|List]) ->
     AccOut = FoldFun(Elem1, Elem2, AccIn),
     foldl_pairs(FoldFun, AccOut, Elem1, List).
+
+
+%%
+%%  Maps every list element to number and adds those numbers.
+%%
+-spec list_map_sum(
+    MapFun :: fun((Elem :: ElemType) -> MapResult :: number()),
+    List   :: [ElemType]
+) ->
+    Sum :: number()
+        when
+            ElemType :: term().
+
+list_map_sum(MapFun, List) ->
+    lists:foldl(fun(Elem, Acc) ->
+        Acc + MapFun(Elem)
+    end, 0, List).
+
+
+%%
+%%  In addition to lists:foldl/3 maps every list element to number and adds
+%%  those numbers.
+%%
+-spec list_foldl_sum(
+    FoldFun         :: fun((
+                            Elem        :: ElemType,
+                            Accumulator :: AccType
+                        ) -> {
+                            MapResult      :: number(),
+                            NewAccumulator :: AccType
+                        }
+                    ),
+    InitAccumulator :: AccType,
+    List            :: [ElemType]
+) ->
+    {Sum :: number(), FinalAccumulator :: AccType}
+        when
+            ElemType :: term(),
+            AccType  :: term().
+
+list_foldl_sum(FoldFun, InitAcc, List) ->
+    lists:foldl(fun(Elem, {AccSum, Acc}) ->
+        {MapResult, NewAcc} = FoldFun(Elem, Acc),
+        {AccSum + MapResult, NewAcc}
+    end, {0, InitAcc}, List).
+
+
+%%
+%%  Maps every map key-value pair to number and adds those numbers.
+%%
+-spec map_map_sum(
+    MapFun :: fun((Key :: KeyType, Value :: ValueType) -> MapResult :: number()),
+    List   :: #{KeyType => ValueType}
+) ->
+    Sum :: number()
+        when
+            KeyType   :: term(),
+            ValueType :: term().
+
+map_map_sum(MapFun, Map) ->
+    maps:fold(fun(Key, Value, Acc) ->
+        Acc + MapFun(Key, Value)
+    end, 0, Map).
 
 
 %%
@@ -620,3 +685,101 @@ split_integer(Int, Split) when Int > 9, Split > 0 ->
         true  -> {Int div Power, Int rem Power};
         false -> undefined
     end.
+
+
+%%
+%%  Calculates the quotient of euclidean division A/B.
+%%
+-spec euclidean_div(A :: integer(), B :: integer()) -> integer().
+
+euclidean_div(A, B) when A>0 -> A div B;
+euclidean_div(0, _)          -> 0;
+euclidean_div(A, B) when A<0 ->
+    case A rem B of
+        0            -> A div B;
+        _ when B > 0 -> A div B - 1;
+        _ when B < 0 -> A div B + 1
+    end.
+
+
+%%
+%%  Calculates the remainder of euclidean division A/B.
+%%
+-spec euclidean_rem(A :: integer(), B :: integer()) -> integer().
+
+euclidean_rem(A, B) ->
+    case A rem B of
+        Pos when Pos >= 0 -> Pos;
+        Neg when B > 0    -> Neg + B;
+        Neg when B < 0    -> Neg - B
+    end.
+
+
+% solve_one_equation_int({0, 0}) -> any;
+% solve_one_equation_int({0, _}) -> undefined;
+% solve_one_equation_int({A, B}) ->
+%     case B rem A of
+%         0 -> B div A;
+%         _ -> undefined
+%     end.
+
+
+% %%
+% %%  A1*X + B1*Y = C1
+% %%  A2*X + B2*Y = C2
+% %%
+% solve_two_equations_int({0,  B1, C1}, {A2, B2, C2}) ->
+%     case solve_one_equation_int({B1, C1}) of
+%         undefined -> undefined;
+%         any       ->
+%             case A2 =:= 0
+% solve_two_equations_int({A1, B1, C1}, {A2, B2, C2}) ->
+%     % (1) A1*X + B1*Y = C1 /*A2
+%     % (2) A2*X + B2*Y = C2 /*A1
+%     % (1)-(2): B3*Y = C3
+%     B3 = B1*A2-B2*A1,
+%     C3 = C1*A2-C2*A1,
+%     case solve_one_equation_int({B3, C3}) of
+%         undefined ->
+
+
+
+%     case B3 of
+%         0 when C3 =:= 0 ->
+%             {any, any};
+%         0 ->
+%             undefined;
+%         _ ->
+%             case C3 rem B3 of
+%                 0 ->
+%                     Y = C3 div B3,
+%                     case {A1 =:= 0, A2 =:= 0} of
+%                         {true, true} ->
+%                             {any, Y};
+%                     % A1*X + B1*Y = C1
+%                     % A1*X = C1 - B1*Y
+%                     % A1*X = C4
+%                     C4 = C1 - B1*Y,
+%                     case C4 rem A1 of
+%                         0 ->
+%                             X = C4 div A1,
+%                             {X, Y};
+%                         _ ->
+%                             undefined
+%                     end;
+
+%                     Y = C3 div B3,
+%                     % A1*X + B1*Y = C1
+%                     % A1*X = C1 - B1*Y
+%                     % A1*X = C4
+%                     C4 = C1 - B1*Y,
+%                     case C4 rem A1 of
+%                         0 ->
+%                             X = C4 div A1,
+%                             {X, Y};
+%                         _ ->
+%                             undefined
+%                     end;
+%                 _ ->
+%                     undefined
+%             end.

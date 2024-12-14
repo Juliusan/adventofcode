@@ -2,9 +2,9 @@
 -export([solve_1/1, solve_2/1]).
 -export([solve/1]).
 
-% Toks lengvas, o beveik neturėjau laiko prisėsti. Pradžioje padariau žioplą
-% klaidą ir niekaip negalėjau jos ištaisyti. Tai trukau ilgiau, negu turėjau.
-% Bet už tai antrai daliai 4 minučių man nereikėjo.
+% Toks lengvas, matematinis, o beveik neturėjau laiko prisėsti. Pradžioje
+% padariau žioplą klaidą ir niekaip negalėjau jos ištaisyti. Tai trukau ilgiau,
+% negu turėjau. Bet už tai antrai daliai 4 minučių man nereikėjo.
 
 % (aoc_2024@JuliusErisataT14.erisata.lt)1> day13:solve_1("priv/day13-PVZ.txt").
 % 480
@@ -56,7 +56,7 @@ solve({AX, AY, BX, BY, PX, PY}) ->
     Correction = case {BX2, PX2} of
         {N, M} when N>0, M>0 -> {BX2, PX2};
         {N, M} when N<0, M<0 -> {-BX2, -PX2};
-        _ -> undefined
+        _                    -> undefined
     end,
     case Correction of
         {BX3, PX3} ->
@@ -81,10 +81,10 @@ solve({AX, AY, BX, BY, PX, PY}) ->
 
 
 solve_all(List) ->
-    lists:foldl(fun(Elem, Acc) ->
+    utils:list_map_sum(fun(Elem) ->
         {A, B} = solve(Elem),
-        Acc + A*3 + B
-    end, 0, List).
+        A*3 + B
+    end, List).
 
 
 solve_1(FileName) ->
