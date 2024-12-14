@@ -14,9 +14,12 @@
 get_integer_test_() ->
     [
         ?_assertEqual({15,         " 23"         }, utils:get_integer("15 23"         )),
+        ?_assertEqual({-15,        " 23"         }, utils:get_integer("-15 23"        )),
+        ?_assertEqual({0,          "-15 23"      }, utils:get_integer("0-15 23"       )),
         ?_assertEqual({15,         "anythingelse"}, utils:get_integer("15anythingelse")),
         ?_assertEqual({15,         ""            }, utils:get_integer("15"            )),
-        ?_assertEqual({1234567890, ""            }, utils:get_integer("1234567890"    ))
+        ?_assertEqual({1234567890, ""            }, utils:get_integer("1234567890"    )),
+        ?_assertThrow(_,                            utils:get_integer("+15 23"        ))
     ].
 
 

@@ -224,10 +224,17 @@ read_lines_no_new_line_to_elems(FileName, LineToElemFuns, Separator) ->
 %%
 -spec get_integer(string()) -> {integer(), Remaining :: string()}.
 
-get_integer(Line) -> get_integer(Line, 0).
+get_integer([$-|Line]) -> {Int, NewLine} = get_pos_integer(Line), {-Int, NewLine};
+get_integer(Line)      ->  get_pos_integer(Line).
 
-get_integer([Digit|Else], Acc) when $0 =< Digit, Digit =< $9 -> get_integer(Else, Acc*10 + Digit - $0);
-get_integer(Line,         Acc)                               -> {Acc, Line}.
+get_pos_integer(Line) ->
+    case get_pos_integer(Line, 0) of
+        {_, NewLine} = Result when Line =/= NewLine -> Result;
+        _                                           -> throw("No digits found")
+    end.
+
+get_pos_integer([Digit|Else], Acc) when $0 =< Digit, Digit =< $9 -> get_pos_integer(Else, Acc*10 + Digit - $0);
+get_pos_integer(Line,         Acc)                               -> {Acc, Line}.
 
 
 %%
