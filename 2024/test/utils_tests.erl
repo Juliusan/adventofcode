@@ -39,6 +39,20 @@ get_integer_list_test_() ->
     ].
 
 
+get_new_matrix_test_() ->
+    [
+        ?_assertEqual(#{},                                             utils:get_new_matrix(a,       {0, 0})),
+        ?_assertEqual(#{{1,1}=>a},                                     utils:get_new_matrix(a,       {1, 1})),
+        ?_assertEqual(#{{1,1}=>5,      {1,2}=>5,      {1,3}=>5      }, utils:get_new_matrix(5,       {1, 3})),
+        ?_assertEqual(#{{1,1}=>$x,     {2,1}=>$x},                     utils:get_new_matrix($x,      {2, 1})),
+        ?_assertEqual(#{{1,1}=>"a",    {1,2}=>"a",    {1,3}=>"a",
+                        {2,1}=>"a",    {2,2}=>"a",    {2,3}=>"a"    }, utils:get_new_matrix("a",     {2, 3})),
+        ?_assertEqual(#{{1,1}=><<"a">>,{1,2}=><<"a">>,{1,3}=><<"a">>,
+                        {2,1}=><<"a">>,{2,2}=><<"a">>,{2,3}=><<"a">>,
+                        {3,1}=><<"a">>,{3,2}=><<"a">>,{3,3}=><<"a">>}, utils:get_new_matrix(<<"a">>, {3, 3}))
+    ].
+
+
 get_char_matrix_test_() ->
     [
         ?_assertEqual({#{},                              {0, 0}}, utils:get_char_matrix([])),
@@ -370,4 +384,55 @@ euclidean_rem_test_() ->
         ?_assertEqual(0, utils:euclidean_rem( 9, -3)),
         ?_assertEqual(0, utils:euclidean_rem(-9,  3)),
         ?_assertEqual(0, utils:euclidean_rem(-9, -3))
+    ].
+
+
+solve_one_equation_int_test_() ->
+    [
+        ?_assertEqual( 2,        utils:solve_one_equation_int({ 2,  4})),
+        ?_assertEqual(-2,        utils:solve_one_equation_int({-3,  6})),
+        ?_assertEqual(-3,        utils:solve_one_equation_int({ 2, -6})),
+        ?_assertEqual( 3,        utils:solve_one_equation_int({-3, -9})),
+        ?_assertEqual(undefined, utils:solve_one_equation_int({ 2,  7})),
+        ?_assertEqual(undefined, utils:solve_one_equation_int({-3,  5})),
+        ?_assertEqual(undefined, utils:solve_one_equation_int({ 4, -6})),
+        ?_assertEqual(undefined, utils:solve_one_equation_int({-5, -8})),
+        ?_assertEqual(any,       utils:solve_one_equation_int({ 0,  0})),
+        ?_assertEqual(undefined, utils:solve_one_equation_int({ 0, 10}))
+    ].
+
+
+solve_two_equations_int_test_() ->
+    [
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({2, 7, 41}, {4, 6, 42})),
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({4, 6, 42}, {2, 7, 41})),
+        ?_assertEqual({5,   3            }, utils:solve_two_equations_int({7, 2, 41}, {6, 4, 42})),
+        ?_assertEqual({5,   3            }, utils:solve_two_equations_int({6, 4, 42}, {7, 2, 41})),
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({0, 7, 35}, {4, 6, 42})),
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({4, 6, 42}, {0, 7, 35})),
+        ?_assertEqual({5,   3            }, utils:solve_two_equations_int({7, 0, 35}, {6, 4, 42})),
+        ?_assertEqual({5,   3            }, utils:solve_two_equations_int({6, 4, 42}, {7, 0, 35})),
+        ?_assertEqual({any, 5            }, utils:solve_two_equations_int({0, 7, 35}, {0, 6, 30})),
+        ?_assertEqual({5,   any          }, utils:solve_two_equations_int({7, 0, 35}, {6, 0, 30})),
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({0, 7, 35}, {4, 0, 12})),
+        ?_assertEqual({3,   5            }, utils:solve_two_equations_int({4, 0, 12}, {0, 7, 35})),
+        ?_assertEqual({any, "(5 - 3*x)/6"}, utils:solve_two_equations_int({0, 0,  0}, {3, 6,  5})),
+        ?_assertEqual({any, "(5 - 3*x)/6"}, utils:solve_two_equations_int({3, 6,  5}, {0, 0,  0})),
+        ?_assertEqual({any, 5            }, utils:solve_two_equations_int({0, 0,  0}, {0, 3, 15})),
+        ?_assertEqual({any, 5            }, utils:solve_two_equations_int({0, 3, 15}, {0, 0,  0})),
+        ?_assertEqual({5,   any          }, utils:solve_two_equations_int({0, 0,  0}, {3, 0, 15})),
+        ?_assertEqual({5,   any          }, utils:solve_two_equations_int({3, 0, 15}, {0, 0,  0})),
+        ?_assertEqual({any, any          }, utils:solve_two_equations_int({0, 0,  0}, {0, 0,  0})),
+        ?_assertEqual({any, "(8 - 2*x)/3"}, utils:solve_two_equations_int({2, 3,  8}, {4, 6, 16})),
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({2, 3, 14}, {4, 5, 25})), % x=2.5; y=3
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({4, 5, 25}, {2, 3, 14})), % x=2.5; y=3
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({3, 2, 14}, {5, 4, 25})), % x=3; y=2.5
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({5, 4, 25}, {3, 2, 14})), % x=3; y=2.5
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({2, 8, 21}, {6, 4, 18})), % x=1.5; y=2.25
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({6, 4, 18}, {2, 8, 21})), % x=1.5; y=2.25
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({8, 2, 21}, {4, 6, 18})), % x=2.25; y=1.5
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({4, 6, 18}, {8, 2, 21})), % x=2.25; y=1.5
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({0, 7, 35}, {0, 6, 24})),
+        ?_assertEqual(undefined,            utils:solve_two_equations_int({7, 0, 35}, {6, 0, 24})),
+        ?_assert(true)
     ].

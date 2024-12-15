@@ -51,39 +51,18 @@ read_prize(Line) ->
 
 
 solve({AX, AY, BX, BY, PX, PY}) ->
-    BX2 = BX*AY-BY*AX,
-    PX2 = PX*AY-PY*AX,
-    Correction = case {BX2, PX2} of
-        {N, M} when N>0, M>0 -> {BX2, PX2};
-        {N, M} when N<0, M<0 -> {-BX2, -PX2};
-        _                    -> undefined
-    end,
-    case Correction of
-        {BX3, PX3} ->
-            case PX3 rem BX3 of
-                0 ->
-                    B = PX3 div BX3,
-                    PX4 = PX - BX*B,
-                    case PX4 rem AX of
-                        0 ->
-                            A = PX4 div AX,
-                            PY = AY*A + BY*B,
-                            {A, B};
-                        _ ->
-                            {0, 0}
-                    end;
-                _ ->
-                    {0, 0}
-            end;
-        undefined ->
-            {0, 0}
+    case utils:solve_two_equations_int({AX, BX, PX}, {AY, BY, PY}) of
+        {A, B} when is_integer(A), is_integer(B), A>=0, B>=0 -> {A, B};
+        _                                                    -> undefined
     end.
 
 
 solve_all(List) ->
     utils:list_map_sum(fun(Elem) ->
-        {A, B} = solve(Elem),
-        A*3 + B
+        case solve(Elem) of
+            {A, B}    -> A*3 + B;
+            undefined -> 0
+        end
     end, List).
 
 

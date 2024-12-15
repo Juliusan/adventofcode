@@ -1,5 +1,6 @@
 -module(utils).
 -export([print/2, print_char_matrix/2]).
+-export([wait_key_press/0]).
 -export([
     read_file/1,
     read_only_line/1,
@@ -11,7 +12,7 @@
     read_lines_no_new_line_to_elems/2,
     read_lines_no_new_line_to_elems/3
 ]).
--export([get_integer/1, get_integer_list/1, get_integer_list/2, get_char_matrix/1]).
+-export([get_integer/1, get_integer_list/1, get_integer_list/2, get_new_matrix/2, get_char_matrix/1]).
 -export([drop_trailing_new_line/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
@@ -20,6 +21,7 @@
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
 -export([euclidean_div/2, euclidean_rem/2]).
+-export([solve_one_equation_int/1, solve_two_equations_int/2]).
 
 
 -type matrix(Type) :: #{matrix_index() => Type}.
@@ -59,6 +61,16 @@ print_char_matrix(Matrix, {Rows, Cols}) ->
         end, lists:seq(1, Cols)),
         io:fwrite("~n")
     end, lists:seq(1, Rows)).
+
+
+%%
+%%  Waits for <enter> key press.
+%%
+-spec wait_key_press() -> ok.
+
+wait_key_press() ->
+    io:fread("", ""),
+    ok.
 
 
 %%
@@ -260,6 +272,23 @@ get_integer_list(Line, Separator) ->
     IntegerStrsOrEmpty = string:split(Line, Separator, all),
     IntegerStrs = lists:filter(fun("") -> false; (_) -> true end, IntegerStrsOrEmpty),
     lists:map(fun(IntegerStr) -> erlang:list_to_integer(IntegerStr) end, IntegerStrs).
+
+
+%%
+%%  Returns matrix with specified dimensions filled with Elem.
+%%
+-spec get_new_matrix(
+        Elem       :: term(),
+        Dimensions :: matrix_index()
+    ) ->
+        Matrix :: matrix(term()).
+
+get_new_matrix(Element, {Rows, Cols}) ->
+    lists:foldl(fun(Row, Acc) ->
+        lists:foldl(fun(Col, Accc) ->
+            Accc#{{Row, Col} => Element}
+        end, Acc, lists:seq(1, Cols))
+    end, #{}, lists:seq(1, Rows)).
 
 
 %%
@@ -715,71 +744,103 @@ euclidean_rem(A, B) ->
     end.
 
 
-% solve_one_equation_int({0, 0}) -> any;
-% solve_one_equation_int({0, _}) -> undefined;
-% solve_one_equation_int({A, B}) ->
-%     case B rem A of
-%         0 -> B div A;
-%         _ -> undefined
-%     end.
+%%
+%%  Solves a single equation A*x=B for x in integers. If there are infinitely
+%%  many solutions, returns `any`. If there are no integer solutions, returns
+%%  undefined.
+%%
+-spec solve_one_equation_int({A :: integer(), B :: integer()}) ->
+    integer() | any | undefined.
+
+solve_one_equation_int({0, 0}) -> any;
+solve_one_equation_int({0, _}) -> undefined;
+solve_one_equation_int({A, B}) ->
+    case B rem A of
+        0 -> B div A;
+        _ -> undefined
+    end.
 
 
-% %%
-% %%  A1*X + B1*Y = C1
-% %%  A2*X + B2*Y = C2
-% %%
-% solve_two_equations_int({0,  B1, C1}, {A2, B2, C2}) ->
-%     case solve_one_equation_int({B1, C1}) of
-%         undefined -> undefined;
-%         any       ->
-%             case A2 =:= 0
-% solve_two_equations_int({A1, B1, C1}, {A2, B2, C2}) ->
-%     % (1) A1*X + B1*Y = C1 /*A2
-%     % (2) A2*X + B2*Y = C2 /*A1
-%     % (1)-(2): B3*Y = C3
-%     B3 = B1*A2-B2*A1,
-%     C3 = C1*A2-C2*A1,
-%     case solve_one_equation_int({B3, C3}) of
-%         undefined ->
+%%
+%%  Solves two equation system with two variables for x and y in integers:
+%%      A1*x + B1*y = C1
+%%      A2*x + B2*y = C2
+%%  If there are infinitely many possible values for x or y, returns `any` in
+%%  that position. If y is dependent on x, returns {any, String}, where String
+%%  represents y's dependency on x. If there are no integer solutions, returns
+%%  undefined.
+%%
+-spec solve_two_equations_int(
+        {A1 :: integer(), B1 :: integer(), C1 :: integer()},
+        {A2 :: integer(), B2 :: integer(), C2 :: integer()}
+    ) ->
+        {
+            X :: integer() | any,
+            Y :: integer() | any | string()
+        } | undefined.
 
+solve_two_equations_int({0, B1, C1}, {A2, B2, C2}) ->
+    % B1*y = C1
+    case {solve_one_equation_int({B1, C1}), A2 =:= 0, B2 =:= 0} of
+        {undefined, _, _} -> % 0*y=C1 =/= 0 or no integer solutions
+            undefined;
+        {any, true, _} -> % 0*y=0
+            % B2*y=C2
+            case solve_one_equation_int({B2, C2}) of
+                undefined            -> undefined;  % 0*y=C2 =/= 0 or no integer solutions
+                any                  -> {any, any}; % 0*y=0
+                Y when is_integer(Y) -> {any, Y}    % B2 =/= 0
+            end;
+        {any, false, true} ->  % 0*y=0
+            % A2*x=C2, A2 =/= 0
+            case solve_one_equation_int({A2, C2}) of
+                undefined            -> undefined;  % no integer solutions
+                X when is_integer(X) -> {X, any}    %
+            end;
+        {any, false, false} ->  % 0*y=0
+            % A2*x+B2*y=C2, A2 =/= 0, B2 =/= 0
+            {any, lists:flatten(io_lib:format("(~p - ~p*x)/~p", [C2, A2, B2]))};
+        {Y, _, _} -> % B1 =/= 0
+            % A2*x=C2-B2*y
+            % A2*x=C3
+            C3 = C2 - B2*Y,
+            case solve_one_equation_int({A2, C3}) of
+                undefined            -> undefined;  % 0*y=C3 =/= 0 or no integer solutions
+                any                  -> {any, Y};   % 0*y=0
+                X when is_integer(X) -> {X, Y}      % A2 =/= 0
+            end
+    end;
 
+solve_two_equations_int({A1, 0, C1}, {A2, B2, C2}) -> % A1 =/= 0
+    case solve_two_equations_int({0, A1, C1}, {B2, A2, C2}) of
+        undefined -> undefined;
+        {Y, X}    -> {X, Y}
+    end;
 
-%     case B3 of
-%         0 when C3 =:= 0 ->
-%             {any, any};
-%         0 ->
-%             undefined;
-%         _ ->
-%             case C3 rem B3 of
-%                 0 ->
-%                     Y = C3 div B3,
-%                     case {A1 =:= 0, A2 =:= 0} of
-%                         {true, true} ->
-%                             {any, Y};
-%                     % A1*X + B1*Y = C1
-%                     % A1*X = C1 - B1*Y
-%                     % A1*X = C4
-%                     C4 = C1 - B1*Y,
-%                     case C4 rem A1 of
-%                         0 ->
-%                             X = C4 div A1,
-%                             {X, Y};
-%                         _ ->
-%                             undefined
-%                     end;
+solve_two_equations_int({A1, B1, C1}, {0, B2, C2}) -> % A1 =/= 0,  % B1 =/= 0
+    solve_two_equations_int({0, B2, C2}, {A1, B1, C1});
 
-%                     Y = C3 div B3,
-%                     % A1*X + B1*Y = C1
-%                     % A1*X = C1 - B1*Y
-%                     % A1*X = C4
-%                     C4 = C1 - B1*Y,
-%                     case C4 rem A1 of
-%                         0 ->
-%                             X = C4 div A1,
-%                             {X, Y};
-%                         _ ->
-%                             undefined
-%                     end;
-%                 _ ->
-%                     undefined
-%             end.
+solve_two_equations_int({A1, B1, C1}, {A2, 0, C2}) -> % A1 =/= 0,  B1 =/= 0, A2 =/= 0
+    solve_two_equations_int({A2, 0, C2}, {A1, B1, C1});
+
+solve_two_equations_int({A1, B1, C1}, {A2, B2, C2}) -> % A1 =/= 0,  B1 =/= 0, A2 =/= 0, B2 =/= 0
+    % (1) A1*X + B1*Y = C1 /*A2
+    % (2) A2*X + B2*Y = C2 /*A1
+    % (1)-(2): B3*Y = C3
+    B3 = B1*A2-B2*A1,
+    C3 = C1*A2-C2*A1,
+    case solve_one_equation_int({B3, C3}) of
+        undefined ->    % 0*y=C3 =/= 0 or no integer solutions
+            undefined;
+        any ->  % 0*y=0
+            {any, lists:flatten(io_lib:format("(~p - ~p*x)/~p", [C1, A1, B1]))};
+        Y ->    % B3 =/= 0
+            % A1*X + B1*Y = C1
+            % A1*X = C1 - B1*Y
+            % A1*X = C4
+            C4 = C1 - B1*Y,
+            case solve_one_equation_int({A1, C4}) of
+                undefined -> undefined;
+                X         -> {X, Y}
+            end
+    end.

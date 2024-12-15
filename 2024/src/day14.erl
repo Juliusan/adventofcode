@@ -76,7 +76,6 @@ move_robots(Robots, Seconds, {Width, Height}) ->
     lists:map(fun({PosX, PosY, VelX, VelY}) ->
         NewPosX = utils:euclidean_rem(PosX+VelX*Seconds, Width),
         NewPosY = utils:euclidean_rem(PosY+VelY*Seconds, Height),
-        %utils:print("ROBOT ~p -> ~p", [{PosX, PosY, VelX, VelY}, {NewPosX, NewPosY}]),
         {NewPosX, NewPosY, VelX, VelY}
     end, Robots).
 
@@ -91,28 +90,22 @@ count_quadrants(Robots, {Width, Height}) ->
         ({PosX, PosY, _, _}, {AccQ1, AccQ2, AccQ3, AccQ4}) when PosX > MiddleW, PosY > MiddleH -> {AccQ1,   AccQ2,   AccQ3,   AccQ4+1};
         ({_,    _,    _, _}, {AccQ1, AccQ2, AccQ3, AccQ4})                                     -> {AccQ1,   AccQ2,   AccQ3,   AccQ4  }
     end, {0, 0, 0, 0}, Robots),
-    %utils:print("QUADRANTS ~p ~p ~p", [MiddleW, MiddleH, {Q1, Q2, Q3, Q4}]),
     Q1*Q2*Q3*Q4.
 
 
 print_robots(Robots, {Cols, Rows}) ->
-    EmptyMap1 = #{{1,1} => 218},
-    EmptyMap2 = lists:foldl(fun(Col, Acc) ->
-        Acc#{{1, Col} => 196}
-    end, EmptyMap1, lists:seq(1, Cols+1)),
-    EmptyMap3 = EmptyMap2#{{1,Cols+2} => 191},
-    EmptyMap4 = lists:foldl(fun(Row, Acc) ->
-        NewAcc1 = Acc#{{Row, 1} => 179},
-        NewAcc2 = lists:foldl(fun(Col, Accc) ->
-            Accc#{{Row, Col} => $ }
-        end, NewAcc1, lists:seq(2, Cols+1)),
-        NewAcc2#{{Row, Cols+2} => 179}
-    end, EmptyMap3, lists:seq(2, Rows+1)),
-    EmptyMap5 = EmptyMap4#{{Rows+2,1} => 192},
-    EmptyMap6 = lists:foldl(fun(Col, Acc) ->
-        Acc#{{Rows+2, Col} => 196}
-    end, EmptyMap5, lists:seq(1, Cols+1)),
-    EmptyMap = EmptyMap6#{{Rows+2,Cols+2} => 217},
+    EmptyMap1 = utils:get_new_matrix($ , {Rows+1, Cols+1}),
+    % corners
+    EmptyMap2 = EmptyMap1#{{1,1}=>$+, {1,Cols+2}=>$+, {Rows+2, 1}=>$+, {Rows+2,Cols+2}=>$+},
+    % top and botom
+    EmptyMap3 = lists:foldl(fun(Col, Acc) ->
+        Acc#{{1,Col}=>$-, {Rows+2,Col}=>$-}
+    end, EmptyMap2, lists:seq(2,Cols+1)),
+    % left and right
+    EmptyMap = lists:foldl(fun(Row, Acc) ->
+        Acc#{{Row,1}=>$|, {Row, Cols+2}=>$|}
+    end, EmptyMap3, lists:seq(2,Rows+1)),
+    % robots
     FullMap = lists:foldl(fun({PosX, PosY, _, _}, Acc) ->
         Acc#{{PosY+2, PosX+2} => $*}
     end, EmptyMap, Robots),
@@ -124,8 +117,7 @@ is_christmas_tree(Robots) ->
     RoboMap = maps:from_list(RoboList),
     is_christmas_tree(RoboList, RoboMap).
 
-
-is_christmas_tree([], _) -> false;
+is_christmas_tree([],                           _  ) -> false;
 is_christmas_tree([{{Row,Col}, true}|RoboList], Map) ->
     Is = lists:all(fun(Index) -> maps:get(Index, Map, false) end, [
                        {Row+1,Col-1}, {Row+1,Col}, {Row+1,Col+1},

@@ -56,32 +56,32 @@ reverse(left ) -> right;
 reverse(up   ) -> down.
 
 
-find_wall_or_empty(Index, Direction, Map, Dimensions, Acc) ->
+find_empty(Index, Direction, Map, Dimensions, Acc) ->
     NextIndex = utils:matrix_next_index(Index, Direction, Dimensions),
     case maps:get(NextIndex, Map) of
-        $# -> {NextIndex, Acc};
-        $O -> find_wall_or_empty(NextIndex, Direction, Map, Dimensions, [NextIndex|Acc]);
-        $. -> {utils:matrix_next_index(NextIndex, Direction, Dimensions), Acc}
+        $# -> undefined;
+        $O -> find_empty(NextIndex, Direction, Map, Dimensions, Acc+1);
+        $. -> {NextIndex, Acc}
     end.
 
 
-move(_, [], Map, _) -> Map;
-move(Robot, [Move|Moves], Map, Dimensions) ->
-    {WallOrEmpty, Boxes} = find_wall_or_empty(Robot, Move, Map, Dimensions, []),
-    NewMap1 = lists:foldl(fun(Index, Acc) ->
-        Acc#{Index => $.}
-    end, Map, [Robot|Boxes]),
-    Reverse = reverse(Move),
-    {NewMap2, NewRobot} = lists:foldl(fun(_, {AccMap, Index}) ->
-        NewAccMap = AccMap#{Index => $O},
-        NewIndex = utils:matrix_next_index(Index, Reverse, Dimensions),
-        {NewAccMap, NewIndex}
-    end, {NewMap1, utils:matrix_next_index(WallOrEmpty, Reverse, Dimensions)}, lists:seq(1,erlang:length(Boxes))),
-    NewMap3 = NewMap2#{NewRobot => $@},
-    %utils:print("MOVE: ~p", [Move]),
-    %utils:print_char_matrix(NewMap3, Dimensions),
-    %io:fread("", ""),
-    move(NewRobot, Moves, NewMap3, Dimensions).
+move_1(_,     [],           Map, _         ) -> Map;
+move_1(Robot, [Move|Moves], Map, Dimensions) ->
+    {NewMap, NewRobot} = case find_empty(Robot, Move, Map, Dimensions, 0) of
+        undefined ->
+            {Map, Robot};
+        {Empty, Boxes} ->
+            NewMap1 = Map#{Robot => $.},
+            Reverse = reverse(Move),
+            {NewMap2, NRobot} = lists:foldl(fun(_, {AccMap, Index}) ->
+                NewAccMap = AccMap#{Index => $O},
+                NewIndex = utils:matrix_next_index(Index, Reverse, Dimensions),
+                {NewAccMap, NewIndex}
+            end, {NewMap1, Empty}, lists:seq(1,Boxes)),
+            NewMap3 = NewMap2#{NRobot => $@},
+            {NewMap3, NRobot}
+    end,
+    move_1(NewRobot, Moves, NewMap, Dimensions).
 
 
 find_empty_hor(Index, Direction, Map, Dimensions, Acc) ->
@@ -95,25 +95,23 @@ find_empty_hor(Index, Direction, Map, Dimensions, Acc) ->
     end.
 
 
-find_empty_ver([], _, _, _, {AccMap, AccCleanIndexes, []}) -> {AccCleanIndexes, AccMap};
-find_empty_ver([], Direction, Map, Dimensions, {AccMap, AccCleanIndexes, AccCheckIndexes}) ->
-    find_empty_ver(AccCheckIndexes, Direction, Map, Dimensions, {AccMap, AccCleanIndexes, []});
-find_empty_ver([Index|Indexes], Direction, Map, Dimensions, {AccMap, AccCleanIndexes, AccCheckIndexes}) ->
+find_empty_ver([], _, _, _, {AccMap, AccCleanIndexes}) -> {AccCleanIndexes, AccMap};
+find_empty_ver([Index|Indexes], Direction, Map, Dimensions, {AccMap, AccCleanIndexes}) ->
     Value = maps:get(Index, Map),
     NextIndex = utils:matrix_next_index(Index, Direction, Dimensions),
-    NewAccCheckIndexes = case {Value, maps:get(NextIndex, Map)} of
+    NewIndexes = case {Value, maps:get(NextIndex, Map)} of
         {_,  $#} -> undefined;
-        {$[, $[} -> [NextIndex|AccCheckIndexes];
-        {$], $]} -> [NextIndex|AccCheckIndexes];
-        {$[, $]} -> [NextIndex,utils:matrix_next_index(NextIndex, left,  Dimensions)|AccCheckIndexes];
-        {$@, $]} -> [NextIndex,utils:matrix_next_index(NextIndex, left,  Dimensions)|AccCheckIndexes];
-        {$], $[} -> [NextIndex,utils:matrix_next_index(NextIndex, right, Dimensions)|AccCheckIndexes];
-        {$@, $[} -> [NextIndex,utils:matrix_next_index(NextIndex, right, Dimensions)|AccCheckIndexes];
-        {_,  $.} -> AccCheckIndexes
+        {$[, $[} -> [NextIndex|Indexes];
+        {$], $]} -> [NextIndex|Indexes];
+        {$[, $]} -> [NextIndex,utils:matrix_next_index(NextIndex, left,  Dimensions)|Indexes];
+        {$@, $]} -> [NextIndex,utils:matrix_next_index(NextIndex, left,  Dimensions)|Indexes];
+        {$], $[} -> [NextIndex,utils:matrix_next_index(NextIndex, right, Dimensions)|Indexes];
+        {$@, $[} -> [NextIndex,utils:matrix_next_index(NextIndex, right, Dimensions)|Indexes];
+        {_,  $.} -> Indexes
     end,
-    case NewAccCheckIndexes of
+    case NewIndexes of
         undefined -> undefined;
-        _         -> find_empty_ver(Indexes, Direction, Map, Dimensions, {AccMap#{NextIndex => Value}, [Index|AccCleanIndexes], NewAccCheckIndexes})
+        _         -> find_empty_ver(NewIndexes, Direction, Map, Dimensions, {AccMap#{NextIndex => Value}, [Index|AccCleanIndexes]})
     end.
 
 
@@ -137,12 +135,9 @@ move_2(Robot, [Move|Moves], Map, Dimensions) when Move =:= left; Move =:= right 
             NewMap3 = NewMap2#{NRobot => $@},
             {NewMap3, NRobot}
     end,
-    % utils:print("MOVE: ~p", [Move]),
-    % utils:print_char_matrix(NewMap, Dimensions),
-    % io:fread("", ""),
     move_2(NewRobot, Moves, NewMap, Dimensions);
 move_2(Robot, [Move|Moves], Map, Dimensions) when Move =:= up; Move =:= down ->
-    {NewMap, NewRobot} = case find_empty_ver([Robot], Move, Map, Dimensions, {#{}, [], []}) of
+    {NewMap, NewRobot} = case find_empty_ver([Robot], Move, Map, Dimensions, {#{}, []}) of
         undefined ->
             {Map, Robot};
         {CleanIndexes, SetMap} ->
@@ -157,9 +152,6 @@ move_2(Robot, [Move|Moves], Map, Dimensions) when Move =:= up; Move =:= down ->
                 {NewAccMap, NewAccRobot}
             end, {NewMap1, undefined}, SetMap)
     end,
-    % utils:print("MOVE: ~p", [Move]),
-    % utils:print_char_matrix(NewMap, Dimensions),
-    % io:fread("", ""),
     move_2(NewRobot, Moves, NewMap, Dimensions).
 
 
@@ -175,10 +167,8 @@ count_boxes(Map) ->
 
 solve_1(FileName) ->
     {Map, Dimensions, Moves} = read_inputs(FileName),
-    %utils:print_char_matrix(Map, Dimensions),
-    %utils:print("~p", [Moves]),
     Robot = utils:matrix_index_of($@, Map),
-    NewMap = move(Robot, Moves, Map, Dimensions),
+    NewMap = move_1(Robot, Moves, Map, Dimensions),
     count_boxes(NewMap).
 
 
@@ -186,8 +176,6 @@ solve_2(FileName) ->
     {Map, Dimensions, Moves} = read_inputs(FileName),
     {Rows, Cols} = Dimensions,
     WiderMap = widen_map(Map),
-    %utils:print_char_matrix(WiderMap, {Rows, Cols*2}),
-    %utils:print("~p", [Moves]),
     Robot = utils:matrix_index_of($@, WiderMap),
     NewMap = move_2(Robot, Moves, WiderMap, {Rows, Cols*2}),
     count_boxes(NewMap).
