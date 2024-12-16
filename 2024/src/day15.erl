@@ -50,12 +50,6 @@ widen_map(Map) ->
     end, #{}, Map).
 
 
-reverse(right) -> left;
-reverse(down ) -> up;
-reverse(left ) -> right;
-reverse(up   ) -> down.
-
-
 find_empty(Index, Direction, Map, Dimensions, Acc) ->
     NextIndex = utils:matrix_next_index(Index, Direction, Dimensions),
     case maps:get(NextIndex, Map) of
@@ -72,7 +66,7 @@ move_1(Robot, [Move|Moves], Map, Dimensions) ->
             {Map, Robot};
         {Empty, Boxes} ->
             NewMap1 = Map#{Robot => $.},
-            Reverse = reverse(Move),
+            Reverse = utils:direction_reverse(Move),
             {NewMap2, NRobot} = lists:foldl(fun(_, {AccMap, Index}) ->
                 NewAccMap = AccMap#{Index => $O},
                 NewIndex = utils:matrix_next_index(Index, Reverse, Dimensions),
@@ -122,7 +116,7 @@ move_2(Robot, [Move|Moves], Map, Dimensions) when Move =:= left; Move =:= right 
             {Map, Robot};
         {Empty, Boxes} ->
             NewMap1 = Map#{Robot => $.},
-            Reverse = reverse(Move),
+            Reverse = utils:direction_reverse(Move),
             {NewMap2, NRobot} = lists:foldl(fun(_, {AccMap, Index1}) ->
                 Index2 = utils:matrix_next_index(Index1, Reverse, Dimensions),
                 NewAccMap = case Reverse of

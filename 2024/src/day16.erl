@@ -35,36 +35,21 @@ read_inputs(FileName) ->
     utils:get_char_matrix(Lines).
 
 
-get_score(Direction, Direction) -> 1;
-get_score(right,     down     ) -> 1001;
-get_score(right,     left     ) -> undefined;
-get_score(right,     up       ) -> 1001;
-get_score(down,      left     ) -> 1001;
-get_score(down,      up       ) -> undefined;
-get_score(down,      right    ) -> 1001;
-get_score(left,      up       ) -> 1001;
-get_score(left,      right    ) -> undefined;
-get_score(left,      down     ) -> 1001;
-get_score(up,        right    ) -> 1001;
-get_score(up,        down     ) -> undefined;
-get_score(up,        left     ) -> 1001.
+get_score(Direction,  Direction ) -> 1;
+get_score(Direction1, Direction2) ->
+    Clockwise  = utils:direction_clockwise(Direction1),
+    Reverse    = utils:direction_reverse(Direction1),
+    CClockwise = utils:direction_counterclockwise(Direction1),
+    case {Clockwise, Reverse, CClockwise} of
+        {Direction2, _, _} -> 1001;
+        {_, Direction2, _} -> undefined;
+        {_, _, Direction2} -> 1001
+    end.
 
 
-reverse(right) -> left;
-reverse(down ) -> up;
-reverse(left ) -> right;
-reverse(up   ) -> down.
-
-
-walk_map([], _, _, AccScores) -> AccScores;
-walk_map([{Index,Direction,Score}|Tiles], Map, Dimensions, Scores) ->
-    Directions = case Direction of
-        right -> [right, down, up];
-        down  -> [down, right, left];
-        left  -> [left, down, up];
-        up    -> [up, right, left]
-    end,
-    %Directions = [right, down, left, up] -- [reverse(Direction)],
+walk_map([],                                  _,   _,          Scores) -> Scores;
+walk_map([{Index, Direction, Score} | Tiles], Map, Dimensions, Scores) ->
+    Directions = [Direction, utils:direction_clockwise(Direction), utils:direction_counterclockwise(Direction)],
     {NewTiles, NewScores} = lists:foldl(fun(NewDirection, {AccTiles, AccScores}) ->
         NewIndex = utils:matrix_next_index(Index, NewDirection, Dimensions),
         case NewIndex of
@@ -91,11 +76,10 @@ walk_map([{Index,Direction,Score}|Tiles], Map, Dimensions, Scores) ->
     walk_map(NewTiles, Map, Dimensions, NewScores).
 
 
-list_tiles([], _, _, AccOnPath) -> lists:usort(AccOnPath);
-list_tiles([{Index,Direction,Score}|Indexes], Dimensions, Scores, AccOnPath) ->
-    NextIndex = utils:matrix_next_index(Index, reverse(Direction), Dimensions),
+list_tiles([],                                    _,          _,      AccOnPath) -> lists:usort(AccOnPath);
+list_tiles([{Index, Direction, Score} | Indexes], Dimensions, Scores, AccOnPath) ->
+    NextIndex = utils:matrix_next_index(Index, utils:direction_reverse(Direction), Dimensions),
     IndexScores = maps:get(NextIndex, Scores),
-    %utils:print("XXX ~p ~p ~p", [Direction, Score, IndexScores]),
     NewIndexes = maps:fold(fun(NewDirection, NewScore, AccIndexes) ->
         case get_score(NewDirection, Direction) of
             undefined ->
@@ -106,29 +90,28 @@ list_tiles([{Index,Direction,Score}|Indexes], Dimensions, Scores, AccOnPath) ->
                 AccIndexes
         end
     end, Indexes, IndexScores),
-    % utils:print("XXX ~p -> ~p", [Index, NewIndexes]),
-    % utils:wait_key_press(),
     list_tiles(NewIndexes, Dimensions, Scores, [Index|AccOnPath]).
 
 
-solve_1(FileName) ->
+solve(FileName, Part) ->
     {Map, Dimensions} = read_inputs(FileName),
-    %utils:print_char_matrix(Map, Dimensions),
-    Start = utils:matrix_index_of($S, Map),
-    Scores = walk_map([{Start, right, 0}], Map, Dimensions, #{}),
-    End = utils:matrix_index_of($E, Map),
-    EndScores = maps:get(End, Scores),
-    lists:min(maps:values(EndScores)).
-
-
-solve_2(FileName) ->
-    {Map, Dimensions} = read_inputs(FileName),
-    %utils:print_char_matrix(Map, Dimensions),
     Start = utils:matrix_index_of($S, Map),
     Scores = walk_map([{Start, right, 0}], Map, Dimensions, #{}),
     End = utils:matrix_index_of($E, Map),
     EndScores = maps:get(End, Scores),
     MinScore = lists:min(maps:values(EndScores)),
-    Directions = [ Direction || {Direction, Score} <- maps:to_list(EndScores), Score =:= MinScore ],
-    Ends = [{End, Direction, MinScore} || Direction <- Directions],
-    erlang:length([Start|list_tiles(Ends, Dimensions, Scores, [])]).
+    case Part of
+        1 -> MinScore;
+        2 ->
+            Directions = [ Direction || {Direction, Score} <- maps:to_list(EndScores), Score =:= MinScore ],
+            Ends = [{End, Direction, MinScore} || Direction <- Directions],
+            erlang:length([Start | list_tiles(Ends, Dimensions, Scores, [])])
+    end.
+
+
+solve_1(FileName) ->
+    solve(FileName, 1).
+
+
+solve_2(FileName) ->
+    solve(FileName, 2).

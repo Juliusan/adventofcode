@@ -19,6 +19,7 @@
 -export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1, foldl_pairs/3, list_map_sum/2, list_foldl_sum/3]).
 -export([map_map_sum/2]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
+-export([direction_all/0, direction_reverse/1, direction_clockwise/1, direction_counterclockwise/1]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
 -export([euclidean_div/2, euclidean_rem/2]).
 -export([solve_one_equation_int/1, solve_two_equations_int/2]).
@@ -655,6 +656,47 @@ matrix_foldl(FoldFun, AccIn, Matrix, {Rows, Cols}) ->
             FoldFun(Index, maps:get(Index, Matrix), Accc)
         end, Acc, lists:seq(1, Cols))
     end, AccIn, lists:seq(1, Rows)).
+
+
+%%
+%%  Returns all possible directions.
+%%
+-spec direction_all() -> [matrix_direction()].
+
+direction_all() -> [right, down, left, up].
+
+
+%%
+%%  Returns opposite direction.
+%%
+-spec direction_reverse(matrix_direction()) -> matrix_direction().
+
+direction_reverse(right) -> left;
+direction_reverse(down ) -> up;
+direction_reverse(left ) -> right;
+direction_reverse(up   ) -> down.
+
+
+%%
+%%  Returns direction after a clockwise turn from initial.
+%%
+-spec direction_clockwise(matrix_direction()) -> matrix_direction().
+
+direction_clockwise(right) -> down;
+direction_clockwise(down ) -> left;
+direction_clockwise(left ) -> up;
+direction_clockwise(up   ) -> right.
+
+
+%%
+%%  Returns direction after a counterclockwise turn from initial.
+%%
+-spec direction_counterclockwise(matrix_direction()) -> matrix_direction().
+
+direction_counterclockwise(right) -> up;
+direction_counterclockwise(down ) -> right;
+direction_counterclockwise(left ) -> down;
+direction_counterclockwise(up   ) -> left.
 
 
 %%

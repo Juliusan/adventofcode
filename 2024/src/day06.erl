@@ -22,12 +22,6 @@ read_inputs(FileName) ->
     utils:get_char_matrix(MapLines).
 
 
-turn(up   ) -> right;
-turn(right) -> down;
-turn(down ) -> left;
-turn(left ) -> up.
-
-
 walk_map(Map, Dimensions, AccStepCount, [{Index, Direction}|_] = AccPath) ->
     Next = utils:matrix_next_index(Index, Direction, Dimensions),
     case Next of
@@ -40,15 +34,14 @@ walk_map(Map, Dimensions, AccStepCount, [{Index, Direction}|_] = AccPath) ->
                 $# -> {turn, AccStepCount}
             end,
             NextPathElem = case Step of
-                go   ->                                 {IndexN, Direction};
-                turn -> NewDirection = turn(Direction), {Index,  NewDirection}
+                go   ->                                                      {IndexN, Direction};
+                turn -> NewDirection = utils:direction_clockwise(Direction), {Index,  NewDirection}
             end,
             case lists:member(NextPathElem, AccPath) of
                 true  -> loop;
                 false -> walk_map(Map#{Index => $X}, Dimensions, NewAccStepCount, [NextPathElem|AccPath])
             end
     end.
-
 
 
 solve_1(FileName) ->
