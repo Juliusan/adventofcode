@@ -436,3 +436,40 @@ solve_two_equations_int_test_() ->
         ?_assertEqual(undefined,            utils:solve_two_equations_int({7, 0, 35}, {6, 0, 24})),
         ?_assert(true)
     ].
+
+
+integer_to_bits_test_() ->
+    [
+        ?_assertEqual([],              utils:integer_to_bits(0)),
+        ?_assertEqual([1],             utils:integer_to_bits(1)),
+        ?_assertEqual([0,1,0,1],       utils:integer_to_bits(10)),
+        ?_assertEqual([1,1,0,1,1,1,1], utils:integer_to_bits(123))
+    ].
+
+
+bits_to_integer_test_() ->
+    [
+        ?_assertEqual(0,   utils:bits_to_integer([])),
+        ?_assertEqual(0,   utils:bits_to_integer([0])),
+        ?_assertEqual(1,   utils:bits_to_integer([1])),
+        ?_assertEqual(1,   utils:bits_to_integer([1,0,0])),
+        ?_assertEqual(10,  utils:bits_to_integer([0,1,0,1])),
+        ?_assertEqual(123, utils:bits_to_integer([1,1,0,1,1,1,1]))
+    ].
+
+
+bit_xor_test_() ->
+    [
+        ?_assertEqual(0, utils:bit_xor(0, 0)),
+        ?_assertEqual(1, utils:bit_xor(0, 1)),
+        ?_assertEqual(1, utils:bit_xor(1, 0)),
+        ?_assertEqual(0, utils:bit_xor(1, 1))
+    ].
+
+
+bits_xor_test_() ->
+    [
+        ?_assertEqual([0,1,1,0],           utils:bits_xor([0,0,1,1],           [0,1,0,1]      )),
+        ?_assertEqual([0,0,1,1,0,0,1],     utils:bits_xor([0,1,1],             [0,1,0,1,0,0,1])),
+        ?_assertEqual([0,1,1,1,0,0,1,1,0], utils:bits_xor([1,0,0,1,1,0,1,1,0], [1,1,1,0,1]    ))
+    ].

@@ -23,15 +23,18 @@
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
 -export([euclidean_div/2, euclidean_rem/2]).
 -export([solve_one_equation_int/1, solve_two_equations_int/2]).
+-export([integer_to_bits/1, bits_to_integer/1, bit_xor/2, bits_xor/2, bit_invert/1]).
 
 
 -type matrix(Type) :: #{matrix_index() => Type}.
 -type matrix_index() :: {Row :: integer(), Column :: integer()}.
 -type matrix_direction() :: up | right | down | left.
+-type bit() :: 0 | 1.
 
 
 -define(CUT_INTEGER,       1_000_000_000_000).
 -define(CUT_INTEGER_POWER, 12).
+-define(IS_BIT(B), (B =:= 0 orelse B =:= 1)).
 
 
 %%
@@ -886,3 +889,61 @@ solve_two_equations_int({A1, B1, C1}, {A2, B2, C2}) -> % A1 =/= 0,  B1 =/= 0, A2
                 X         -> {X, Y}
             end
     end.
+
+
+%%
+%%  Returns binary representation of integer as list of 0s and 1s. The first
+%%  element in the returned list is a least significant digit and the last one
+%%  is the most significant digit.
+%%
+-spec integer_to_bits(integer()) -> [bit()].
+
+integer_to_bits(Int) when Int >= 0 -> integer_to_bits(Int, []).
+integer_to_bits(0,   Acc)              -> lists:reverse(Acc);
+integer_to_bits(Int, Acc) when Int > 0 -> integer_to_bits(Int div 2, [Int rem 2 | Acc]).
+
+
+%%
+%%  Returns integer from its binary representation, provided as list of 0s and
+%%  1s. The first element in the parameter list is a least significant digit
+%%  and the last one is the most significant digit.
+%%
+-spec bits_to_integer([bit()]) -> integer().
+
+bits_to_integer(Bits) -> bits_to_integer(lists:reverse(Bits), 0).
+
+bits_to_integer([], Acc)                           -> Acc;
+bits_to_integer([Bit|Bits], Acc) when ?IS_BIT(Bit) -> bits_to_integer(Bits, Acc*2+Bit).
+
+
+%%
+%%  Performs xor operation for two bits.
+%%
+-spec bit_xor(bit(), bit()) -> bit().
+
+bit_xor(D,  D ) when ?IS_BIT(D)               -> 0;
+bit_xor(D1, D2) when ?IS_BIT(D1), ?IS_BIT(D2) -> 1.
+
+
+%%
+%%  Performs bitwise xor operation for two binary numbers, provided as list of
+%%  0s and 1s. Note that the returned bit list might contain 0s in most
+%%  significant positions (in the end of the list).
+%%
+-spec bits_xor([bit()], [bit()]) -> [bit()].
+
+bits_xor(Bits1, Bits2) -> bits_xor(Bits1, Bits2, []).
+
+bits_xor([],           [],           Acc)                                   -> lists:reverse(Acc);
+bits_xor([Bit1|Bits1], [Bit2|Bits2], Acc) when ?IS_BIT(Bit1), ?IS_BIT(Bit2) -> bits_xor(Bits1, Bits2, [bit_xor(Bit1, Bit2) | Acc]);
+bits_xor([],           [Bit2|Bits2], Acc) when ?IS_BIT(Bit2)                -> bits_xor([],    Bits2, [Bit2                | Acc]);
+bits_xor([Bit1|Bits1], [],           Acc) when ?IS_BIT(Bit1)                -> bits_xor(Bits1, [],    [Bit1                | Acc]).
+
+
+%%
+%%  Inverts a single bit.
+%%
+-spec bit_invert(bit()) -> bit().
+
+bit_invert(1) -> 0;
+bit_invert(0) -> 1.
