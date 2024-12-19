@@ -16,8 +16,19 @@
 -export([drop_trailing_new_line/1]).
 -export([count_elems_sorted/2, count_elems_start/1]).
 -export([is_decreasing/2, is_increasing/2]).
--export([transpose/1, diagonals_f/1, diagonals_b/1, middle/1, middle_single/1, foldl_pairs/3, list_map_sum/2, list_foldl_sum/3]).
--export([map_map_sum/2]).
+-export([
+    transpose/1,
+    diagonals_f/1,
+    diagonals_b/1,
+    middle/1,
+    middle_single/1,
+    foldl_pairs/3,
+    list_map_sum/2,
+    list_filter_count/2,
+    list_foldl_sum/3,
+    list_foldl_count/3
+]).
+-export([map_map_sum/2, map_map_count/2]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
 -export([direction_all/0, direction_reverse/1, direction_clockwise/1, direction_counterclockwise/1]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
@@ -523,6 +534,26 @@ list_map_sum(MapFun, List) ->
 
 
 %%
+%%  Filters list elements using FilterFun and counts the remaining ones.
+%%
+-spec list_filter_count(
+    FilterFun :: fun((Elem :: ElemType) -> boolean()),
+    List      :: [ElemType]
+) ->
+    Count :: number()
+        when
+            ElemType :: term().
+
+list_filter_count(FilterFun, List) ->
+    list_map_sum(fun(Elem) ->
+        case FilterFun(Elem) of
+            true  -> 1;
+            false -> 0
+        end
+    end, List).
+
+
+%%
 %%  In addition to lists:foldl/3 maps every list element to number and adds
 %%  those numbers.
 %%
@@ -551,11 +582,41 @@ list_foldl_sum(FoldFun, InitAcc, List) ->
 
 
 %%
+%%  In addition to lists:foldl/3 filters list elements using FoldFun and counts
+%%  the remaining ones.
+%%
+-spec list_foldl_count(
+    FoldFun         :: fun((
+                            Elem        :: ElemType,
+                            Accumulator :: AccType
+                        ) -> {
+                            CountElement   :: boolean(),
+                            NewAccumulator :: AccType
+                        }
+                    ),
+    InitAccumulator :: AccType,
+    List            :: [ElemType]
+) ->
+    {Count :: number(), FinalAccumulator :: AccType}
+        when
+            ElemType :: term(),
+            AccType  :: term().
+
+list_foldl_count(FilterFun, InitAcc, List) ->
+    list_foldl_sum(fun(Elem, Acc) ->
+        case FilterFun(Elem, Acc) of
+            {true,  NewAcc} -> {1, NewAcc};
+            {false, NewAcc} -> {0, NewAcc}
+        end
+    end, InitAcc, List).
+
+
+%%
 %%  Maps every map key-value pair to number and adds those numbers.
 %%
 -spec map_map_sum(
     MapFun :: fun((Key :: KeyType, Value :: ValueType) -> MapResult :: number()),
-    List   :: #{KeyType => ValueType}
+    Map    :: #{KeyType => ValueType}
 ) ->
     Sum :: number()
         when
@@ -566,6 +627,27 @@ map_map_sum(MapFun, Map) ->
     maps:fold(fun(Key, Value, Acc) ->
         Acc + MapFun(Key, Value)
     end, 0, Map).
+
+
+%%
+%%  Filters key-value pairs using FilterFun and counts the remaining ones.
+%%
+-spec map_map_count(
+    FilterFun :: fun((Key :: KeyType, Value :: ValueType) -> boolean()),
+    Map       :: #{KeyType => ValueType}
+) ->
+    Sum :: number()
+        when
+            KeyType   :: term(),
+            ValueType :: term().
+
+map_map_count(FilterFun, Map) ->
+    map_map_sum(fun(Key, Value) ->
+        case FilterFun(Key, Value) of
+            true  -> 1;
+            false -> 0
+        end
+    end, Map).
 
 
 %%

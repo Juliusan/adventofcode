@@ -84,11 +84,8 @@ count_perimeters(Regions, Map, Dimensions) ->
     maps:map(fun({_, Name}, Indexes) ->
         utils:list_map_sum(fun(Index) ->
             NextIndexes = lists:map(fun(Direction) -> utils:matrix_next_index(Index, Direction, Dimensions) end, [up, right, down, left]),
-            utils:list_map_sum(fun(NextIndex) ->
-                case is_tile_suitable(NextIndex, Name, Map) of
-                    true  -> 0;
-                    false -> 1
-                end
+            utils:list_filter_count(fun(NextIndex) ->
+                not(is_tile_suitable(NextIndex, Name, Map))
             end, NextIndexes)
         end, Indexes)
     end, Regions).
@@ -105,17 +102,17 @@ count_sides(Regions, Map, Dimensions) ->
         RowMap = maps:map(SortValuesFun, RowMapNS),
         ColMap = maps:map(SortValuesFun, ColMapNS),
         CountSidesFun = fun(Dim1, Dim2s, MakeIndexFun, SuccDirection, NextDirection) ->
-            {Count, _} = utils:list_foldl_sum(fun(Dim2, {PrevBorder, ExpectedIndex}) ->
+            {Count, _} = utils:list_foldl_count(fun(Dim2, {PrevBorder, ExpectedIndex}) ->
                 Index = MakeIndexFun(Dim1, Dim2),
                 SuccIndex = utils:matrix_next_index(Index, SuccDirection, Dimensions),
                 IsBorder = not(is_tile_suitable(SuccIndex, Name, Map)),
-                AddedValue = case {Index =:= ExpectedIndex, IsBorder, PrevBorder} of
-                    {true,  true, false} -> 1;
-                    {false, true,  _   } -> 1;
-                    {_,     _,     _   } -> 0
+                DoCount = case {Index =:= ExpectedIndex, IsBorder, PrevBorder} of
+                    {true,  true, false} -> true;
+                    {false, true,  _   } -> true;
+                    {_,     _,     _   } -> false
                 end,
                 NextIndex = utils:matrix_next_index(Index, NextDirection, Dimensions),
-                {AddedValue, {IsBorder, NextIndex}}
+                {DoCount, {IsBorder, NextIndex}}
             end, {false, MakeIndexFun(Dim1, 1)}, Dim2s),
             %utils:print("XXX region ~p dimension ~p-~p (~p) count ~p", [[Name], Dim1, SuccDirection, Dim2s, Count]),
             Count

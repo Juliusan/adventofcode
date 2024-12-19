@@ -197,6 +197,15 @@ list_map_sum_test_() ->
     ].
 
 
+list_filter_count_test_() ->
+    [
+        ?_assertEqual(0, utils:list_filter_count(fun(_) -> true               end, [                  ])),
+        ?_assertEqual(0, utils:list_filter_count(fun(A) -> (A-$0) rem 2 =:= 0 end, [$1                ])),
+        ?_assertEqual(1, utils:list_filter_count(fun(A) -> (A-$0) rem 2 =:= 0 end, [$2                ])),
+        ?_assertEqual(2, utils:list_filter_count(fun(A) -> (A-$0) rem 2 =:= 0 end, [$1, $2, $3, $4, $5]))
+    ].
+
+
 list_foldl_sum_test_() ->
     [
         ?_assertEqual({0, 10}, utils:list_foldl_sum(fun(A, B) -> {B*(A-$0), B-1} end, 10, [              ])),
@@ -205,11 +214,29 @@ list_foldl_sum_test_() ->
     ].
 
 
+list_foldl_count_test_() ->
+    [
+        ?_assertEqual({0, 10}, utils:list_foldl_count(fun(A, B) -> {B*(A-$0) rem 2 =:= 0, B-1} end, 10, [              ])),
+        ?_assertEqual({0, 10}, utils:list_foldl_count(fun(A, B) -> {B*(A-$0) rem 2 =:= 0, B-1} end, 11, [$1            ])),
+        ?_assertEqual({1,  9}, utils:list_foldl_count(fun(A, B) -> {B*(A-$0) rem 2 =:= 0, B-1} end, 10, [$2            ])),
+        ?_assertEqual({3,  6}, utils:list_foldl_count(fun(A, B) -> {B*(A-$0) rem 2 =:= 0, B-1} end, 10, [$1, $2, $4, $5]))
+    ].
+
+
 map_map_sum_test_() ->
     [
         ?_assertEqual(0,  utils:map_map_sum(fun(K, V) -> K*V end, #{})),
         ?_assertEqual(10, utils:map_map_sum(fun(K, V) -> K*V end, #{1 => 10})),
         ?_assertEqual(80, utils:map_map_sum(fun(K, V) -> K*V end, #{1 => 10, 2 => 9, 3 => 8, 4 => 7}))
+    ].
+
+
+map_map_count_test_() ->
+    [
+        ?_assertEqual(0, utils:map_map_count(fun(K, V) -> K*V rem 2 =:= 0 end, #{})),
+        ?_assertEqual(0, utils:map_map_count(fun(K, V) -> K*V rem 2 =:= 0 end, #{1 => 11})),
+        ?_assertEqual(1, utils:map_map_count(fun(K, V) -> K*V rem 2 =:= 0 end, #{1 => 10})),
+        ?_assertEqual(3, utils:map_map_count(fun(K, V) -> K*V rem 2 =:= 0 end, #{1 => 10, 2 => 9, 3 => 7, 4 => 6}))
     ].
 
 
