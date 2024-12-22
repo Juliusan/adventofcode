@@ -223,6 +223,14 @@ list_foldl_count_test_() ->
     ].
 
 
+map_reverse_test_() ->
+    [
+        ?_assertEqual(#{},                                utils:map_reverse(#{})),
+        ?_assertEqual(#{10 => 1},                         utils:map_reverse(#{1 => 10})),
+        ?_assertEqual(#{10 => 1, 9 => 2, 8 => 3, 7 => 4}, utils:map_reverse(#{1 => 10, 2 => 9, 3 => 8, 4 => 7}))
+    ].
+
+
 map_map_sum_test_() ->
     [
         ?_assertEqual(0,  utils:map_map_sum(fun(K, V) -> K*V end, #{})),

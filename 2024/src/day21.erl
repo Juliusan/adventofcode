@@ -1,14 +1,33 @@
 -module(day21).
 -export([solve_1/1, solve_2/1]).
 
-% Niekaip nesugalvoju, kaip optimizuoti...
+% Iš pradžių padariau be kešavimo - tiesiog ėjimų skaičiavimą. Turėjau nuojautą,
+% kad antra dalis tiesiog turės daugiau lygių. Bet turėjau išeitį - pridėsiu
+% kešavimą ir tiek. Iš pradžių kešavau ėjimų sekas, vis pridėdamas po vieną
+% ėjimą prie jau sukešuotos sekos. Po to sugalvojau kešuoti blokų (ėjimų seka
+% iki `activate`) sekas. Bet man vis buvo reikalinga saugoti realias ėjimų (ar
+% blokų) sekas, tai jau 5 lygyje jos pasidarydavo tokios didelės, kad nelabai
+% ką ir suskaičiuodavo. Pastebėjau, kad programa stringa ant tų sekų surinkimo
+% iš opcijų. Galvojau, gal kažkaip opcijas geriau saugoti. Tada galvojau, gal
+% iš dviejų variantų visada geresnis yra kuris nors vienas. Ne tiek daug tų
+% variantų su realiomis opcijomis yra. Bandžiau spėlioti. Ir vis tiek iki 25
+% lygio sunkiai nueidavo. Galiausiai pastebėjau, kad kešuoju ne rekursijos
+% žingsnį, o jos rezultatą. Kai tik perrašiau, kad kešuočiau žingsnį, nebeliko
+% beprotiškų sąrašų saugojimo poreikio ir viskas pradėjo suktis milisekundėmis.
+% Užtrukau žymiai ilgiau, negu norėčiau pripažinti.
 
 % (aoc_2024@JuliusErisataT14.erisata.lt)1> day21:solve_1("priv/day21-PVZ.txt").
 % 126384
 % (aoc_2024@JuliusErisataT14.erisata.lt)2> day21:solve_1("priv/day21.txt").
 % 202648
-% (aoc_2024@JuliusErisataT14.erisata.lt)3> timer:tc(fun() -> day21:solve_1("priv/day21.txt") end).
-% {658,202648}
+% (aoc_2024@JuliusErisataT14.erisata.lt)3> day21:solve_2("priv/day21-PVZ.txt").
+% 154115708116294
+% (aoc_2024@JuliusErisataT14.erisata.lt)4> day21:solve_2("priv/day21.txt").
+% 248919739734728
+% (aoc_2024@JuliusErisataT14.erisata.lt)5> timer:tc(fun() -> day21:solve_1("priv/day21.txt") end).
+% {638,202648}
+% (aoc_2024@JuliusErisataT14.erisata.lt)6> timer:tc(fun() -> day21:solve_2("priv/day21.txt") end).
+% {1464,248919739734728}
 
 
 read_inputs(FileName) ->
@@ -33,11 +52,7 @@ digit_keypad() ->
         (_Key, $#  ) -> empty;
         (_Key, Char) -> Char
     end, MapChars),
-    reverse_map(Map).
-
-
-reverse_map(Map) ->
-    maps:fold(fun(Key, Value, Acc) -> Acc#{Value => Key} end, #{}, Map).
+    utils:map_reverse(Map).
 
 
 directions_keypad() ->
@@ -54,16 +69,17 @@ directions_keypad() ->
         (_Key, $>) -> right;
         (_Key, $#) -> empty
     end, MapChars),
-    reverse_map(Map).
+    utils:map_reverse(Map).
 
 
-enter_code(Code, KeyPad) ->
-    enter_code(Code, KeyPad, activate, []).
+code_to_block_options(Code, KeyPad) ->
+    code_to_block_options(Code, KeyPad, activate, []).
 
+code_to_block_options([], _, _, Acc) ->
+    lists:reverse(Acc);
 
-enter_code([], _, _, Acc) -> lists:reverse(Acc);
-enter_code([NextCel|Code], KeyPad, CurrCel, Acc) ->
-    {CurrRow, CurrCol}   = maps:get(CurrCel,  KeyPad),
+code_to_block_options([NextCel|Code], KeyPad, CurrCel, Acc) ->
+    {CurrRow, CurrCol}   = maps:get(CurrCel, KeyPad),
     {NextRow, NextCol}   = maps:get(NextCel, KeyPad),
     {EmptyRow, EmptyCol} = maps:get(empty,   KeyPad),
     Hor = case NextCol - CurrCol of
@@ -83,205 +99,80 @@ enter_code([NextCel|Code], KeyPad, CurrCel, Acc) ->
         { _,  _, _,        EmptyCol, EmptyRow, _       } -> [Hor ++ Ver ++ [activate]];
         { _,  _, _,        _,        _,        _       } -> [Hor ++ Ver ++ [activate], Ver ++ Hor ++ [activate]]
     end,
-    enter_code(Code, KeyPad, NextCel, [Moves|Acc]).
+    code_to_block_options(Code, KeyPad, NextCel, [Moves|Acc]).
 
 
-% find_moves_in_cache([First|Moves], Cache) ->
-%     {Shortest, ShortestMoves} = maps:get([First], Cache),
-%     find_moves_in_cache([First], Moves, Shortest, ShortestMoves, Cache).
+block_otpions_to_blocks(BlockOpts) -> block_otpions_to_blocks(BlockOpts, [], []).
+block_otpions_to_blocks([], AccBlocks, AccFinalBlocks) -> [lists:reverse(AccBlocks)|AccFinalBlocks];
+block_otpions_to_blocks([BlockOpt|BlockOpts], AccBlocks, AccFinalBlocks) ->
+    lists:foldl(fun(Block, Acc) ->
+        block_otpions_to_blocks(BlockOpts, [Block|AccBlocks], Acc)
+    end, AccFinalBlocks, BlockOpt).
 
 
-% find_moves_in_cache(AllMoves, [], AccShortest, AccShortestMoves, _Cache) ->
-%     {AllMoves, [], AccShortest, AccShortestMoves};
-
-% find_moves_in_cache(FirstMoves, [CutMove|LastMoves], AccShortest, AccShortestMoves, Cache) ->
-%     FirstMovesCut = FirstMoves ++ [CutMove],
-%     case maps:get(FirstMovesCut, Cache, undefined) of
-%         undefined                       -> {FirstMoves, [CutMove|LastMoves], AccShortest, AccShortestMoves};
-%         {NewShortest, NewShortestMoves} -> find_moves_in_cache(FirstMovesCut, LastMoves, NewShortest, NewShortestMoves, Cache)
-%     end.
-
-
-% enter_directions([], _KeyPad, _LastMove, AccShortest, AccMoves, AccFinalShortest, AccFinalMoves, Cache) ->
-%     %utils:print("XXX ~p ~p ~p ~p", [AccShortest, AccMoves, AccFinalShortest, AccFinalMoves]),
-%     AccMovesFlat = get_moves(lists:reverse(AccMoves)),
-%     %utils:print("XXX2 ~p", [AccMovesFlat]),
-%     case {AccShortest, AccFinalShortest} of
-%         _ when AccShortest  <  AccFinalShortest -> {AccShortest,      AccMovesFlat,                  Cache};
-%         _ when AccShortest =:= AccFinalShortest -> {AccShortest,      AccFinalMoves ++ AccMovesFlat, Cache};
-%         _ when AccShortest  >  AccFinalShortest -> {AccFinalShortest, AccFinalMoves,                 Cache}
-%     end;
-
-% enter_directions(Moves, KeyPad, LastMove, AccShortest, AccMoves, AccFinalShortest, AccFinalMoves, Cache) ->
-%     LastMoveCache = maps:get(LastMove, Cache, #{}),
-%     {MovesFound, NewMovesNotCut, Shortest, ShortestMoves} = find_moves_in_cache(Moves, LastMoveCache),
-%     case NewMovesNotCut of
-%         [] ->
-%             NewAccShortest = AccShortest + Shortest,
-%             NewAccMoves = [ShortestMoves | AccMoves ],
-%             enter_directions([], KeyPad, undefined, NewAccShortest, NewAccMoves, AccFinalShortest, AccFinalMoves, Cache);
-%         [CutMove|NewMoves] ->
-%             {SingleShortest, SingleShortestMoves} = maps:get([CutMove], maps:get(lists:last(MovesFound), Cache)),
-%             NewShortest = SingleShortest + Shortest,
-%             NewShortestMoves = [ lists:append(SM, SSM) || SM <- ShortestMoves, SSM <- SingleShortestMoves ],
-%             NewAccShortest = AccShortest + NewShortest,
-%             NewAccMoves = [NewShortestMoves | AccMoves ],
-%             NewLastMoveCache = LastMoveCache#{MovesFound ++ [CutMove] => {NewShortest, NewShortestMoves}},
-%             NewCache = Cache#{LastMove => NewLastMoveCache},
-%             %utils:print("NEW CACHe ~p", [NewCache]),
-%             enter_directions(NewMoves, KeyPad, CutMove, NewAccShortest, NewAccMoves, AccFinalShortest, AccFinalMoves, NewCache)
-%     end.
-
-
-% enter_directions(MovesList, KeyPad, Shortest, Moves, Cache) ->
-%     lists:foldl(fun(Ms, {AccShortest, AccMoves, AccCache}) ->
-%         %utils:print("XXX CACHE ~p", [utils:map_map_sum(fun(_, Map2) -> maps:size(Map2) end, AccCache)]),
-%         enter_directions(Ms, KeyPad, activate, 0, [[[]]], AccShortest, AccMoves, AccCache)
-%     end, {Shortest, Moves, Cache}, MovesList).
-
-% pre_seed_cache(NumberKeyPad) ->
-%     Keys = [up, right, down, left, activate],
-%     lists:foldl(fun(From, Acc1) ->
-%         MoveMap = lists:foldl(fun(To, Acc2) ->
-%             Moves = get_moves(enter_code([To], NumberKeyPad, From, [])),
-%             [Move|_] = Moves,
-%             Acc2#{[To] => {erlang:length(Move), Moves}}
-%         end, #{}, Keys),
-%         Acc1#{From => MoveMap}
-%     end, #{}, Keys).
-
-
-% enter_code_robot(MovesList, _, 0, Cache) ->
-%     {MovesList, Cache};
-
-% enter_code_robot(MovesList, NumberKeyPad, Count, Cache) when Count > 0 ->
-%     {_, NewMovesList, NewCache} = enter_directions(MovesList, NumberKeyPad, infinity, [], Cache),
-%     %utils:print("LEVEL ~p", [Count]),
-%     %print_moves(NewMovesList),
-%     enter_code_robot(NewMovesList, NumberKeyPad, Count-1, NewCache).
-
-
-% enter_codes(Code, Count, Cache) ->
-%     DigitKeyPad = digit_keypad(),
-%     NumberKeyPad = number_keypad(),
-%     %utils:print("~p", [DigitKeyPad]),
-%     Sequence = enter_code(Code, DigitKeyPad),
-%     MovesList = get_moves(Sequence),
-%     %print_moves(MovesList),
-%     enter_code_robot(MovesList, NumberKeyPad, Count, Cache).
-
-
-get_moves(MoveOpts) ->
-    get_moves(MoveOpts, [], []).
-
-get_moves([], AccMove, AccMoves) -> [lists:append(lists:reverse(AccMove))|AccMoves];
-get_moves([MoveOpt|MoveOpts], AccMove, AccMoves) ->
-    lists:foldl(fun(Move, Acc) ->
-        get_moves(MoveOpts, [Move|AccMove], Acc)
-    end, AccMoves, MoveOpt).
-
-
-% print_moves(Moves) ->
-%     lists:foreach(fun(Move) ->
-%         MoveStr = lists:map(fun
-%             (up      ) -> $^;
-%             (activate) -> $A;
-%             (left    ) -> $<;
-%             (down    ) -> $v;
-%             (right   ) -> $>
-%         end, Move),
-%         utils:print("~p", [MoveStr])
-%     end, Moves).
-
-get_block(Moves) ->
-    get_block(Moves, []).
-
-get_block([activate|Moves], Acc) -> {lists:reverse([activate|Acc]), Moves};
-get_block([First|Moves], Acc) -> get_block(Moves, [First|Acc]).
-
-
-to_blocks(Moves) -> to_blocks(Moves, []).
-to_blocks([], Acc) -> lists:reverse(Acc);
-to_blocks(Moves, Acc) ->
-    {Block, OtherMoves} = get_block(Moves),
-    to_blocks(OtherMoves, [Block|Acc]).
-
-count_block_robot(Block, DirectionKeyPad, 1, Cache) ->
+find_shortest_block(Block, DirectionKeyPad, 1, Cache) ->
     case maps:get({Block, 1}, Cache, undefined) of
         undefined ->
-            Sequence = enter_code(Block, DirectionKeyPad),
-            %utils:print("SEQUENCE ~p", [Sequence]),
-            MoveList = get_moves(Sequence),
-            [Moves|_] = MoveList,
-            Length = erlang:length(Moves),
-            true = lists:all(fun(M) -> Length =:= erlang:length(M) end, MoveList), % Check
-            {Length, MoveList, Cache#{{Block, 1} => {Length, [Moves]}}};%MoveList}}};
-        {Length, MoveList} ->
-            {Length, MoveList, Cache}
+            NewBlockOpts = code_to_block_options(Block, DirectionKeyPad),
+            NewBlockList = block_otpions_to_blocks(NewBlockOpts),
+            [FirstBlocks|_] = NewBlockList,
+            BlocksLengthFun = fun(Blocks) -> utils:list_map_sum(fun erlang:length/1, Blocks) end,
+            Length = BlocksLengthFun(FirstBlocks),
+            true = lists:all(fun(Blocks) -> Length =:= BlocksLengthFun(Blocks) end, NewBlockList), % Check
+            {Length, Cache#{{Block, 1} => {Length, NewBlockList}}};
+        {Length, _BlockList} ->
+            {Length, Cache}
     end;
 
-count_block_robot(Block, DirectionKeyPad, Count, Cache) when Count > 1 ->
-    %utils:print("CACHE: ~p", [maps:size(Cache)]),
+find_shortest_block(Block, KeyPad, Count, Cache) when Count > 1 ->
     case maps:get({Block, Count}, Cache, undefined) of
         undefined ->
-            {_PrevLength, PrevMoveList, NewCache1} = count_block_robot(Block, DirectionKeyPad, Count-1, Cache),
-            {FinalLength, StepMoveOpts, NewCache2} = count_code_robot(PrevMoveList, DirectionKeyPad, 1, NewCache1),
-            %utils:print("XXX ~p", [StepMoveOpts]),
-            NewMoveList = lists:append(lists:map(fun get_moves/1, StepMoveOpts)),
-            NewCache = NewCache2#{{Block, Count} => {FinalLength, NewMoveList}},
-            {FinalLength, NewMoveList, NewCache};
-        {Length, BlockMoves} ->
-            {Length, BlockMoves, Cache}
+            {StepLength, NewCache1} = find_shortest_block(Block, KeyPad, 1, Cache),
+            {StepLength, StepBlockList} = maps:get({Block, 1}, NewCache1),
+            {NewLength, NewCache2} = find_shortest_block_list(StepBlockList, KeyPad, Count-1, NewCache1),
+            NewCache = NewCache2#{{Block, Count} => NewLength},
+            {NewLength, NewCache};
+        Length ->
+            {Length, Cache}
     end.
 
 
-count_blocks_robot([], _, _, AccLength, AccMoveOpts, Cache) ->
-    {AccLength, lists:reverse(AccMoveOpts), Cache};
-
-count_blocks_robot([Block|Blocks], DirectionKeyPad, Count, AccLength, AccMoveOpts, Cache) ->
-    {BlockLength, BlockMoveList, NewCache} = count_block_robot(Block, DirectionKeyPad, Count, Cache),
-    count_blocks_robot(Blocks, DirectionKeyPad, Count, AccLength + BlockLength, [BlockMoveList|AccMoveOpts], NewCache).
+find_shortest_blocks(Blocks, KeyPad, Count, Cache) ->
+    utils:list_foldl_sum(fun(Block, AccCache) ->
+        find_shortest_block(Block, KeyPad, Count, AccCache)
+    end, Cache, Blocks).
 
 
-count_code_robot(MoveList, DirectionKeyPad, Count, Cache) ->
-    lists:foldl(fun(Moves, {AccShortest, AccMoveOpts, AccCache}) ->
-        Blocks = to_blocks(Moves),
-        {Shortest, NewMoveOpts, NewAccCache} = count_blocks_robot(Blocks, DirectionKeyPad, Count, 0, [], AccCache),
-        case {Shortest, AccShortest} of
-            _ when Shortest  <  AccShortest -> {Shortest,    [NewMoveOpts],               NewAccCache};
-            _ when Shortest =:= AccShortest -> {AccShortest, [NewMoveOpts | AccMoveOpts], NewAccCache};
-            _ when Shortest  >  AccShortest -> {AccShortest, AccMoveOpts,                 NewAccCache}
-        end
-    end, {infinity, [], Cache}, MoveList).
+find_shortest_block_list(BlockList, KeyPad, Count, Cache) ->
+    lists:foldl(fun(Blocks, {AccShortest, AccCache}) ->
+        {Shortest, NewAccCache} = find_shortest_blocks(Blocks, KeyPad, Count, AccCache),
+        NewShortest = lists:min([Shortest, AccShortest]),
+        {NewShortest, NewAccCache}
+    end, {infinity, Cache}, BlockList).
 
 
 
-count_code(Code, Count, DigitKeyPad, DirectionKeyPad, Cache) ->
-    Sequence = enter_code(Code, DigitKeyPad),
-    MoveList = get_moves(Sequence),
-    %print_moves(MovesList),
-    count_code_robot(MoveList, DirectionKeyPad, Count, Cache).
+find_shortest_code(Code, Count, DigitKeyPad, DirectionKeyPad, Cache) ->
+    BlockOpts = code_to_block_options(Code, DigitKeyPad),
+    BlockList = block_otpions_to_blocks(BlockOpts),
+    find_shortest_block_list(BlockList, DirectionKeyPad, Count, Cache).
 
 
-count_codes(Codes, Count) ->
+find_shortest_codes(Codes, Count) ->
     DigitKeyPad     = digit_keypad(),
     DirectionKeyPad = directions_keypad(),
-    {Sum, C} = utils:list_foldl_sum(fun(Code, AccCache) ->
-        {Shortest, _, NewAccCache} = count_code(Code, Count, DigitKeyPad, DirectionKeyPad, AccCache),
-        %print_moves(Moves),
-        %MoveLengths = lists:map(fun erlang:length/1, Moves),
+    {Complexity, _} = utils:list_foldl_sum(fun(Code, AccCache) ->
+        {Shortest, NewAccCache} = find_shortest_code(Code, Count, DigitKeyPad, DirectionKeyPad, AccCache),
         {Int, [activate]} = utils:get_integer(Code),
         %utils:print("MIN ~p DIGIT ~p", [Shortest, Int]),
         {Shortest * Int, NewAccCache}
     end, #{}, Codes),
-    %utils:print("XXX ~p", [C]),
-    %utils:print("XXX ~p~nXXX ~p~nXXX ~p", [maps:get({[up,up,left,left,activate], 1}, C), maps:get({[up,up,left,left,activate], 2}, C), maps:get({[up,up,left,left,activate], 3}, C)]),
-    Sum.
+    Complexity.
 
 
 solve(FileName, Count) ->
     Codes = read_inputs(FileName),
-    count_codes(Codes, Count).
+    find_shortest_codes(Codes, Count).
 
 
 solve_1(FileName) ->

@@ -28,7 +28,7 @@
     list_foldl_sum/3,
     list_foldl_count/3
 ]).
--export([map_map_sum/2, map_map_count/2]).
+-export([map_reverse/1, map_map_sum/2, map_map_count/2]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
 -export([direction_all/0, direction_reverse/1, direction_clockwise/1, direction_counterclockwise/1]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
@@ -609,6 +609,26 @@ list_foldl_count(FilterFun, InitAcc, List) ->
             {false, NewAcc} -> {0, NewAcc}
         end
     end, InitAcc, List).
+
+
+%%
+%% Reverses the map su that instead of key-value pairs it stores value-key
+%% pairs. This function expects that Map is injective. If however two different
+%% keys point to the same value in Map, then it is not defined, which key will
+%% be assigned to the value in ReversedMap.
+%%
+-spec map_reverse(
+    Map :: #{KeyType => ValueType}
+) ->
+    ReversedMap :: #{ValueType => KeyType}
+        when
+            KeyType   :: term(),
+            ValueType :: term().
+
+map_reverse(Map) ->
+    maps:fold(fun(Key, Value, Acc) ->
+        Acc#{Value => Key}
+    end, #{}, Map).
 
 
 %%
