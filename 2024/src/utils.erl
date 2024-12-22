@@ -28,7 +28,7 @@
     list_foldl_sum/3,
     list_foldl_count/3
 ]).
--export([map_reverse/1, map_map_sum/2, map_map_count/2]).
+-export([map_reverse/1, map_max_value/1, map_min_value/1, map_map_sum/2, map_map_count/2]).
 -export([matrix_index_of/2, matrix_is_valid_index/2, matrix_next_index/3, matrix_foldl/4]).
 -export([direction_all/0, direction_reverse/1, direction_clockwise/1, direction_counterclockwise/1]).
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
@@ -629,6 +629,50 @@ map_reverse(Map) ->
     maps:fold(fun(Key, Value, Acc) ->
         Acc#{Value => Key}
     end, #{}, Map).
+
+
+%%
+%%  Returns maximum among the values in map.
+%%
+-spec map_max_value(
+    Map :: #{KeyType => ValueType}
+) ->
+    MaxValue :: ValueType
+        when
+            KeyType   :: term(),
+            ValueType :: term().
+
+map_max_value(Map) ->
+    case maps:next(maps:iterator(Map)) of
+        {_, FirstValue, _} ->
+            maps:fold(fun(_, Value, Acc) ->
+                lists:max([Value, Acc])
+            end, FirstValue, Map);
+        none ->
+            undefined
+    end.
+
+
+%%
+%%  Returns minimum among the values in map.
+%%
+-spec map_min_value(
+    Map :: #{KeyType => ValueType}
+) ->
+    MinValue :: ValueType
+        when
+            KeyType   :: term(),
+            ValueType :: term().
+
+map_min_value(Map) ->
+    case maps:next(maps:iterator(Map)) of
+        {_, FirstValue, _} ->
+            maps:fold(fun(_, Value, Acc) ->
+                lists:min([Value, Acc])
+            end, FirstValue, Map);
+        none ->
+            undefined
+    end.
 
 
 %%

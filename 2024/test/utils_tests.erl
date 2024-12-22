@@ -231,6 +231,22 @@ map_reverse_test_() ->
     ].
 
 
+map_max_value_test_() ->
+    [
+        ?_assertEqual(undefined, utils:map_max_value(#{})),
+        ?_assertEqual(10,        utils:map_max_value(#{1 => 10})),
+        ?_assertEqual(15,        utils:map_max_value(#{1 => 10, 2 => -6, 3 => 15, 4 => 7}))
+    ].
+
+
+map_min_value_test_() ->
+    [
+        ?_assertEqual(undefined, utils:map_min_value(#{})),
+        ?_assertEqual(10,        utils:map_min_value(#{1 => 10})),
+        ?_assertEqual(-6,        utils:map_min_value(#{1 => 10, 2 => -6, 3 => 15, 4 => 7}))
+    ].
+
+
 map_map_sum_test_() ->
     [
         ?_assertEqual(0,  utils:map_map_sum(fun(K, V) -> K*V end, #{})),

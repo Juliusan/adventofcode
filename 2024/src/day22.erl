@@ -43,11 +43,21 @@ nth_secret(N, Secret) ->
     nth_secret(N-1, NewSecret).
 
 
+add_diffs([P1|Prices]) ->
+    add_diffs([P1|Prices], [{P1, undefined}]).
+
+add_diffs([_], Acc) ->
+    lists:reverse(Acc);
+
+add_diffs([P1,P2|Prices], Acc) ->
+        add_diffs([P2|Prices], [{P2, P2 - P1}|Acc]).
+
+
 find_best_changes_buyer([_P1,_P2,_P3,_P4], _AccSeen, AccCache) ->
     AccCache;
 
-find_best_changes_buyer([P1,P2,P3,P4,P5|Prices], AccSeen, AccCache) ->
-    Diffs = {P2 - P1, P3 - P2, P4 - P3, P5 - P4},
+find_best_changes_buyer([_, {P2, D2}, {P3, D3}, {P4, D4}, {P5, D5} | Prices], AccSeen, AccCache) ->
+    Diffs = {D2, D3, D4, D5},
     {NewAccSeen, NewAccCache} = case maps:get(Diffs, AccSeen, undefined) of
         true ->
             {AccSeen, AccCache};
@@ -56,7 +66,7 @@ find_best_changes_buyer([P1,P2,P3,P4,P5|Prices], AccSeen, AccCache) ->
             NewAccBananas = AccBananas + P5,
             {AccSeen#{Diffs => true}, AccCache#{Diffs => NewAccBananas}}
     end,
-    find_best_changes_buyer([P2,P3,P4,P5|Prices], NewAccSeen, NewAccCache).
+    find_best_changes_buyer([{P2, D2}, {P3, D3}, {P4, D4}, {P5, D5} | Prices], NewAccSeen, NewAccCache).
 
 
 
@@ -64,9 +74,7 @@ find_best_changes_buyers(PricesList) ->
     Cache = lists:foldl(fun(Prices, AccCache) ->
         find_best_changes_buyer(Prices, #{}, AccCache)
     end, #{}, PricesList),
-    maps:fold(fun(_, Price, Acc) ->
-        lists:max([Price, Acc])
-    end, 0, Cache).
+    utils:map_max_value(Cache).
 
 
 
@@ -87,4 +95,5 @@ solve_2(FileName) ->
         end, Secret, lists:seq(1, 2000)),
         Prices
     end, Secrets),
-    find_best_changes_buyers(PricesList).
+    PricesListDiff = lists:map(fun add_diffs/1, PricesList),
+    find_best_changes_buyers(PricesListDiff).
