@@ -179,6 +179,19 @@ middle_single_test_() ->
     ].
 
 
+intersections_test_() ->
+    [
+        ?_assertEqual([],    utils:intersection([     ], [     ])),
+        ?_assertEqual([],    utils:intersection([1,2,3], [4,5,6])),
+        ?_assertEqual([2,3], utils:intersection([1,2,3], [2,3,4])),
+        ?_assertEqual([2,3], utils:intersection([1,2,3], [2,3  ])),
+        ?_assertEqual([2,3], utils:intersection([  2,3], [2,3,4])),
+        ?_assertEqual([2,3], utils:intersection([1,2,3], [3,4,2])),
+        ?_assertEqual([2,3], utils:intersection([1,2,3], [3,  2])),
+        ?_assertEqual([2,3], utils:intersection([  2,3], [3,4,2]))
+    ].
+
+
 foldl_pairs_test_() ->
     [
         ?_assertEqual(ok,                                    utils:foldl_pairs(fun(_,  _,  _) -> fail end,         ok, [       ])),
@@ -374,8 +387,7 @@ integer_10_pow_test_() ->
         ?_assertEqual(1_000,                                     utils:integer_10_pow( 3)),
         ?_assertEqual(10_000_000_000,                            utils:integer_10_pow(10)),
         ?_assertEqual(100_000_000_000_000_000_000,               utils:integer_10_pow(20)),
-        ?_assertEqual(1_000_000_000_000_000_000_000_000_000_000, utils:integer_10_pow(30)),
-        ?_assert(true)
+        ?_assertEqual(1_000_000_000_000_000_000_000_000_000_000, utils:integer_10_pow(30))
     ].
 
 

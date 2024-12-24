@@ -24,63 +24,57 @@
 
 
 read_inputs(FileName) ->
-    utils:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
+    Connections = utils:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
         [Comp1, Comp2] = string:split(Line, "-", all),
         {Comp1, Comp2}
-    end).
+    end),
+    connections_to_map(Connections).
 
 
 connections_to_map(Connections) ->
     lists:foldl(fun({Comp1, Comp2}, Acc) ->
-        Comp1Cons = maps:get(Comp1, Acc, []),
-        Comp2Cons = maps:get(Comp2, Acc, []),
-        NewComp1Cons = [Comp2 | Comp1Cons],
-        NewComp2Cons = [Comp1 | Comp2Cons],
-        Acc#{Comp1 => NewComp1Cons, Comp2 => NewComp2Cons}
+        Comp1Conns = maps:get(Comp1, Acc, []),
+        Comp2Conns = maps:get(Comp2, Acc, []),
+        Acc#{
+            Comp1 => [Comp2 | Comp1Conns],
+            Comp2 => [Comp1 | Comp2Conns]
+        }
     end, #{}, Connections).
 
 
 find_three_way_network(ConnMap) ->
-    Networks = maps:fold(fun(Comp1, Comp1Cons, AccNetworks1) ->
+    Networks = maps:fold(fun(Comp1, Comp1Conns, AccNetworks1) ->
         lists:foldl(fun(Comp2, AccNetworks2) ->
             case Comp1 < Comp2 of
                 true ->
-                    Comp2Cons = maps:get(Comp2, ConnMap, []),
-                    Intersect = [ Comp || Comp <- Comp1Cons, true =:= lists:member(Comp, Comp2Cons) ],
+                    Comp2Conns = maps:get(Comp2, ConnMap, []),
+                    Intersection = utils:intersection(Comp1Conns, Comp2Conns),
                     lists:foldl(fun(Comp3, AccNetworks3) ->
                         case Comp2 < Comp3 of
-                            true ->
-                                case maps:get(Comp3, ConnMap, undefined) of
-                                    undefined  -> AccNetworks3;
-                                    _Comp3Cons -> [{Comp1, Comp2, Comp3} | AccNetworks3]
-                                end;
-                            false ->
-                                AccNetworks3
+                            true  -> [{Comp1, Comp2, Comp3} | AccNetworks3];
+                            false -> AccNetworks3
                         end
-                    end, AccNetworks2, Intersect);
+                    end, AccNetworks2, Intersection);
                 false ->
                     AccNetworks2
             end
-        end, AccNetworks1, Comp1Cons)
+        end, AccNetworks1, Comp1Conns)
     end, [], ConnMap),
     Networks.
 
 
 find_largest_network(ConnMap) ->
-    Keys = maps:keys(ConnMap),
-    find_largest_network(Keys, Keys, [], ConnMap).
+    find_largest_network(maps:keys(ConnMap), [], ConnMap).
 
-find_largest_network([], A, AccNetwork, _ConnMap) ->
-    %utils:print("---~n~p~n~p~n...", [A, AccNetwork]),
-    %
+find_largest_network([], AccNetwork, _ConnMap) ->
     AccNetwork;
 
-find_largest_network(Comps, CompInter, AccNetwork, ConnMap) ->
+find_largest_network(Comps, AccNetwork, ConnMap) ->
     lists:foldl(fun(Comp, Acc) ->
         CompConns = maps:get(Comp, ConnMap),
-        Intersect = [ C || C <- CompInter, true =:= lists:member(C, CompConns) ],
-        IntersectGood = lists:filter(fun(C) -> Comp < C end, Intersect),
-        Largest = find_largest_network(IntersectGood, Intersect, [Comp|AccNetwork], ConnMap),
+        Intersection = utils:intersection(Comps, CompConns),
+        ValidComps = lists:filter(fun(C) -> Comp < C end, Intersection),
+        Largest = find_largest_network(ValidComps, [Comp|AccNetwork], ConnMap),
         case erlang:length(Largest) > erlang:length(Acc) of
             true  -> Largest;
             false -> Acc
@@ -89,27 +83,20 @@ find_largest_network(Comps, CompInter, AccNetwork, ConnMap) ->
 
 
 
-is_ts(Network) ->
-    case Network of
-        {[$t|_], _, _} -> true;
-        {_, [$t|_], _} -> true;
-        {_, _, [$t|_]} -> true;
-        {_, _,      _} -> false
-    end.
+is_ts({[$t|_], _, _}) -> true;
+is_ts({_, [$t|_], _}) -> true;
+is_ts({_, _, [$t|_]}) -> true;
+is_ts({_, _,      _}) -> false.
 
 
 solve_1(FileName) ->
-    Connections = read_inputs(FileName),
-    ConnMap = connections_to_map(Connections),
+    ConnMap = read_inputs(FileName),
     Networks = find_three_way_network(ConnMap),
-    %lists:foreach(fun(Network) -> utils:print("~p", [Network]) end, Networks),
     utils:list_filter_count(fun is_ts/1, Networks).
 
 
 solve_2(FileName) ->
-    Connections = read_inputs(FileName),
-    ConnMap = connections_to_map(Connections),
-    %NewConnMap = maps:map(fun(Key, Value) -> [Key|Value] end, ConnMap),
+    ConnMap = read_inputs(FileName),
     Network = find_largest_network(ConnMap),
     NetworkS = lists:sort(Network),
-    lists:append(lists:join(",", NetworkS)).
+    string:join(NetworkS, ",").

@@ -22,6 +22,7 @@
     diagonals_b/1,
     middle/1,
     middle_single/1,
+    intersection/2,
     foldl_pairs/3,
     list_map_sum/2,
     list_filter_count/2,
@@ -476,11 +477,27 @@ middle(List) ->
 %%  designed for lists containing odd number of elements. If List contains even
 %%  number of elements, this function crashes.
 %%
--spec middle_single(List :: [ElemType]) -> ElemType.
+-spec middle_single(List :: [ElemType]) -> ElemType
+    when ElemType :: term().
 
 middle_single(List) ->
     [Middle] = middle(List),
     Middle.
+
+
+%%
+%%  Finds the intersection of two given lists. That is, returns a list,
+%%  containing those elements, which are in both given lists.
+%%
+-spec intersection(
+        List1 :: [ElemType],
+        List2 :: [ElemType]
+    ) ->
+        Intersection :: [ElemType]
+    when ElemType :: term().
+
+intersection(List1, List2) ->
+    [ Elem || Elem <- List1, lists:member(Elem, List2) ].
 
 
 %%
