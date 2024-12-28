@@ -521,6 +521,25 @@ bits_to_integer_test_() ->
     ].
 
 
+bit_and_test_() ->
+    [
+        ?_assertEqual(0, utils:bit_and(0, 0)),
+        ?_assertEqual(0, utils:bit_and(0, 1)),
+        ?_assertEqual(0, utils:bit_and(1, 0)),
+        ?_assertEqual(1, utils:bit_and(1, 1))
+    ].
+
+
+
+bit_or_test_() ->
+    [
+        ?_assertEqual(0, utils:bit_or(0, 0)),
+        ?_assertEqual(1, utils:bit_or(0, 1)),
+        ?_assertEqual(1, utils:bit_or(1, 0)),
+        ?_assertEqual(1, utils:bit_or(1, 1))
+    ].
+
+
 bit_xor_test_() ->
     [
         ?_assertEqual(0, utils:bit_xor(0, 0)),
@@ -530,9 +549,28 @@ bit_xor_test_() ->
     ].
 
 
+bits_and_test_() ->
+    [
+        ?_assertEqual([0],         utils:bits_and([0,1],             [0,0,1]        )),
+        ?_assertEqual([0,0,0,1],   utils:bits_and([0,0,1,1],         [0,1,0,1]      )),
+        ?_assertEqual([0,1],       utils:bits_and([0,1,1],           [0,1,0,1,0,0,1])),
+        ?_assertEqual([1,0,0,0,1], utils:bits_and([1,0,0,1,1,0,1,1], [1,1,1,0,1]    ))
+    ].
+
+
+bits_or_test_() ->
+    [
+        ?_assertEqual([0],               utils:bits_or([0],               [0]            )),
+        ?_assertEqual([0,1,1,1],         utils:bits_or([0,0,1,1],         [0,1,0,1]      )),
+        ?_assertEqual([0,1,1,1,0,0,1],   utils:bits_or([0,1,1],           [0,1,0,1,0,0,1])),
+        ?_assertEqual([1,1,1,1,1,0,1,1], utils:bits_or([1,0,0,1,1,0,1,1], [1,1,1,0,1]    ))
+    ].
+
+
 bits_xor_test_() ->
     [
-        ?_assertEqual([0,1,1,0],           utils:bits_xor([0,0,1,1],           [0,1,0,1]      )),
-        ?_assertEqual([0,0,1,1,0,0,1],     utils:bits_xor([0,1,1],             [0,1,0,1,0,0,1])),
-        ?_assertEqual([0,1,1,1,0,0,1,1,0], utils:bits_xor([1,0,0,1,1,0,1,1,0], [1,1,1,0,1]    ))
+        ?_assertEqual([0],               utils:bits_xor([0,1],             [0,1]          )),
+        ?_assertEqual([0,1,1],           utils:bits_xor([0,0,1,1],         [0,1,0,1]      )),
+        ?_assertEqual([0,0,1,1,0,0,1],   utils:bits_xor([0,1,1],           [0,1,0,1,0,0,1])),
+        ?_assertEqual([0,1,1,1,0,0,1,1], utils:bits_xor([1,0,0,1,1,0,1,1], [1,1,1,0,1]    ))
     ].

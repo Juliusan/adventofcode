@@ -35,7 +35,7 @@
 -export([integer_digit_count/1, integer_10_pow/1, concat_integers/2, split_integer/2]).
 -export([euclidean_div/2, euclidean_rem/2]).
 -export([solve_one_equation_int/1, solve_two_equations_int/2]).
--export([integer_to_bits/1, bits_to_integer/1, bit_xor/2, bits_xor/2, bit_invert/1]).
+-export([integer_to_bits/1, bits_to_integer/1, bit_and/2, bit_or/2, bit_xor/2, bits_and/2, bits_or/2, bits_xor/2, bit_invert/1]).
 
 
 -type matrix(Type) :: #{matrix_index() => Type}.
@@ -1080,27 +1080,75 @@ bits_to_integer([Bit|Bits], Acc) when ?IS_BIT(Bit) -> bits_to_integer(Bits, Acc*
 
 
 %%
-%%  Performs xor operation for two bits.
+%%  Performs and operation for two bits. Compared to band, it checks if
+%%  parameters are bits.
+%%
+-spec bit_and(bit(), bit()) -> bit().
+
+bit_and(D1, D2) -> bit_op(op_and, D1, D2).
+
+
+%%
+%%  Performs or operation for two bits. Compared to bor, it checks if
+%%  parameters are bits.
+%%
+-spec bit_or(bit(), bit()) -> bit().
+
+bit_or(D1, D2) -> bit_op(op_or, D1, D2).
+
+
+%%
+%%  Performs xor operation for two bits. Compared to bxor, it checks if
+%%  parameters are bits.
 %%
 -spec bit_xor(bit(), bit()) -> bit().
 
-bit_xor(D,  D ) when ?IS_BIT(D)               -> 0;
-bit_xor(D1, D2) when ?IS_BIT(D1), ?IS_BIT(D2) -> 1.
+bit_xor(D1, D2) -> bit_op(op_xor, D1, D2).
+
+
+%%
+%%  Performs bitwise and operation for two binary numbers, provided as list of
+%%  0s and 1s.
+%%
+-spec bits_and([bit()], [bit()]) -> [bit()].
+
+bits_and(Bits1, Bits2) -> bits_op(op_and, Bits1, Bits2).
+
+
+%%
+%%  Performs bitwise or operation for two binary numbers, provided as list of
+%%  0s and 1s.
+%%
+-spec bits_or([bit()], [bit()]) -> [bit()].
+
+bits_or(Bits1, Bits2) -> bits_op(op_or, Bits1, Bits2).
 
 
 %%
 %%  Performs bitwise xor operation for two binary numbers, provided as list of
-%%  0s and 1s. Note that the returned bit list might contain 0s in most
-%%  significant positions (in the end of the list).
+%%  0s and 1s.
 %%
 -spec bits_xor([bit()], [bit()]) -> [bit()].
 
-bits_xor(Bits1, Bits2) -> bits_xor(Bits1, Bits2, []).
+bits_xor(Bits1, Bits2) -> bits_op(op_xor, Bits1, Bits2).
 
-bits_xor([],           [],           Acc)                                   -> lists:reverse(Acc);
-bits_xor([Bit1|Bits1], [Bit2|Bits2], Acc) when ?IS_BIT(Bit1), ?IS_BIT(Bit2) -> bits_xor(Bits1, Bits2, [bit_xor(Bit1, Bit2) | Acc]);
-bits_xor([],           [Bit2|Bits2], Acc) when ?IS_BIT(Bit2)                -> bits_xor([],    Bits2, [Bit2                | Acc]);
-bits_xor([Bit1|Bits1], [],           Acc) when ?IS_BIT(Bit1)                -> bits_xor(Bits1, [],    [Bit1                | Acc]).
+
+bit_op(op_and, D1, D2) when ?IS_BIT(D1), ?IS_BIT(D2) -> D1 band D2;
+bit_op(op_or,  D1, D2) when ?IS_BIT(D1), ?IS_BIT(D2) -> D1 bor  D2;
+bit_op(op_xor, D1, D2) when ?IS_BIT(D1), ?IS_BIT(D2) -> D1 bxor D2.
+
+
+bits_op(Op, Bits1, Bits2) -> bits_op(Op, Bits1, Bits2, []).
+
+bits_op(_Op, [],           [],           Acc)                                   -> lists:reverse(drop_start_zeros(Acc));
+bits_op( Op, [Bit1|Bits1], [Bit2|Bits2], Acc) when ?IS_BIT(Bit1), ?IS_BIT(Bit2) -> bits_op(Op, Bits1, Bits2, [bit_op(Op, Bit1, Bit2) | Acc]);
+bits_op( Op, [],           [Bit2|Bits2], Acc) when ?IS_BIT(Bit2)                -> bits_op(Op, [],    Bits2, [bit_op(Op, 0,    Bit2) | Acc]);
+bits_op( Op, [Bit1|Bits1], [],           Acc) when ?IS_BIT(Bit1)                -> bits_op(Op, Bits1, [],    [bit_op(Op, Bit1, 0   ) | Acc]).
+
+
+drop_start_zeros([0])        -> [0];
+drop_start_zeros([0|Digits]) -> drop_start_zeros(Digits);
+drop_start_zeros([1|Digits]) -> [1|Digits].
 
 
 %%
