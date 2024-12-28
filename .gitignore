@@ -1,9 +1,7 @@
-.eunit
-*.o
-*.beam
-*.plt
+# General
 erl_crash.dump
-.concrete/DEV_MODE
+recompile.log
+.vscode
 
 # rebar 2.x
 .rebar
@@ -16,5 +14,6 @@ deps
 _build/
 _checkouts/
 
-*/priv.txt
+# Project specific
+*/priv/day*.txt
 */priv/times.txt
