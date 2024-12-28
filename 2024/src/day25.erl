@@ -1,5 +1,5 @@
 -module(day25).
--export([solve_1/1, solve_2/1]).
+-export([solve_1/1]).
 
 % Pirma dalis nebuvo sunki, o antros iš viso nebuvo.
 
@@ -12,23 +12,19 @@
 
 
 read_inputs(FileName) ->
-    Lines = utils:read_lines_no_new_line(FileName),
-    KeyLockStrs = split(Lines),
-    {Keys, Locks} = lists:foldl(fun(KeyLockStr, {AccKeys, AccLocks}) ->
+    KeysOrLocks = utils:read_line_groups_no_new_line(FileName, fun(KeyLockStr) ->
         {KeyLockMatrix, {Rows, Cols}} = utils:get_char_matrix(KeyLockStr),
-        %utils:print("-------------", []),
-        %utils:print_char_matrix(KeyLockMatrix, {Rows, Cols} ),
         GetKeyOrLockFun = fun(First, Second) ->
             lists:map(fun(Column) ->
                 FinalCount   = lists:foldl(fun(Row, Count) ->
                     Tile = maps:get({Row, Column}, KeyLockMatrix),
                     case {Tile, Count} of
-                        {T, undefined} when T =:= First                 -> undefined;
-                        {T, undefined} when T =:= Second                -> 0;
-                        {T, C        } when T =:= Second, is_integer(C) -> Count+1
+                        {First,  undefined}                    -> undefined;
+                        {Second, undefined}                    -> 0;
+                        {Second, C        } when is_integer(C) -> Count+1
                     end
                 end, undefined, lists:seq(1, Rows)),
-                true =:= erlang:is_integer(FinalCount),
+                true = erlang:is_integer(FinalCount),
                 FinalCount
             end, lists:seq(1, Cols))
         end,
@@ -37,22 +33,15 @@ read_inputs(FileName) ->
             $# ->
                 LockInv = GetKeyOrLockFun($#, $.),
                 Lock = lists:map(fun(Inv) -> Size - Inv end, LockInv),
-                %utils:print("LOCK: ~p", [Lock]),
-                {AccKeys, [{Size, Lock} | AccLocks]};
+                {lock, {Size, Lock}};
             $. ->
                 Key = GetKeyOrLockFun($., $#),
-                %utils:print("KEY: ~p", [Key]),
-                {[{Size, Key} | AccKeys], AccLocks}
+                {key, {Size, Key}}
         end
-    end, {[], []}, KeyLockStrs).
-
-
-split(Lines) ->
-    split(Lines, [], []).
-
-split([],           AccSingle, AccFinal) -> [AccSingle|AccFinal];
-split([""|Lines],   AccSingle, AccFinal) -> split(Lines, [],               [AccSingle|AccFinal]);
-split([Line|Lines], AccSingle, AccFinal) -> split(Lines, [Line|AccSingle], AccFinal            ).
+    end, "\n"),
+    Keys  = [ Key  || {key,  Key } <- KeysOrLocks ],
+    Locks = [ Lock || {lock, Lock} <- KeysOrLocks ],
+    {Keys, Locks}.
 
 
 count_fits(Keys, Locks) ->
@@ -69,7 +58,3 @@ count_fits(Keys, Locks) ->
 solve_1(FileName) ->
     {Keys, Locks} = read_inputs(FileName),
     count_fits(Keys, Locks).
-
-
-solve_2(FileName) ->
-    ok.

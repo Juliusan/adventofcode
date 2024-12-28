@@ -10,7 +10,9 @@
     read_lines_to_elems/2,
     read_lines_to_elems/3,
     read_lines_no_new_line_to_elems/2,
-    read_lines_no_new_line_to_elems/3
+    read_lines_no_new_line_to_elems/3,
+    read_line_groups/3,
+    read_line_groups_no_new_line/3
 ]).
 -export([get_integer/1, get_integer_list/1, get_integer_list/2, get_new_matrix/2, get_char_matrix/1]).
 -export([drop_trailing_new_line/1]).
@@ -156,8 +158,9 @@ read_lines_no_new_line(FileName) -> read_lines_to_elems(FileName, fun drop_trail
 
 
 %%
-%%  Reads file FileName and each line converts to a single element in the resulting list, using LineToElemFun.
-%%  The returned list is in reversed order compared to input file.
+%%  Reads file FileName and converts each line to a single element in the
+%%  resulting list, using LineToElemFun. The returned list is in reversed order
+%%  compared to input file.
 %%
 -spec read_lines_to_elems(
     FileName      :: string(),
@@ -246,6 +249,55 @@ read_lines_no_new_line_to_elems(FileName, LineToElemFuns, Separator) ->
         end
     end, LineToElemFuns),
     read_lines_to_elems(FileName, NewLineToElemFuns, Separator).
+
+
+%%
+%%  Reads file FileName, which consists of groups of lines, separated by line
+%%  Separator. Each group of lines is converted to group using `GroupToElemFun`.
+%%  Groups are returned in reversed order compared to lines of input file,
+%%  which were used to make them.
+%%
+-spec read_line_groups(
+    FileName       :: string(),
+    GroupToElemFun :: fun((Lines :: [string()]) -> GroupType),
+    Separator      :: string()
+) ->
+    [GroupType] when
+        GroupType :: term().
+
+read_line_groups(FileName, GroupToElemFun, Separator) ->
+    {ok, File} = file:open(FileName, [read]),
+    Result = read_line_groups(File, GroupToElemFun, Separator, [], []),
+    ok = file:close(File),
+    Result.
+
+read_line_groups(File, GroupToElemFun, Separator, Group, Groups) ->
+    case file:read_line(File) of
+        eof ->
+            [GroupToElemFun(Group) | Groups];
+        {ok, Separator} ->
+            read_line_groups(File, GroupToElemFun, Separator, [], [GroupToElemFun(Group) | Groups]);
+        {ok, Line} ->
+            read_line_groups(File, GroupToElemFun, Separator, [Line | Group], Groups)
+    end.
+
+
+%%
+%%  Same as read_line_groups/3, but the read lines are stripped of trailing
+%%  new line character before passing to GroupToElemFun.
+%%
+-spec read_line_groups_no_new_line(
+    FileName       :: string(),
+    GroupToElemFun :: fun((Lines :: [string()]) -> GroupType),
+    Separator      :: string()
+) ->
+    [GroupType] when
+        GroupType :: term().
+
+read_line_groups_no_new_line(FileName, GroupToElemFun, Separator) ->
+    read_line_groups(FileName, fun(Lines) ->
+        GroupToElemFun(lists:map(fun drop_trailing_new_line/1, Lines))
+    end, Separator).
 
 
 %%
