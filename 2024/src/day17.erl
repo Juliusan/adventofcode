@@ -200,7 +200,7 @@ solve_1(FileName) ->
     {A, B, C, ProgramList} = read_inputs(FileName),
     Program = program_to_map(ProgramList, 0, #{}),
     %utils:print("A=~p, B=~p, C=~p, Program=~p", [A, B, C, Program]),
-    {_, OutputR} = run(utils:integer_to_bits(247390116249600), B, C, 0, Program, []),
+    {_, OutputR} = run(A, B, C, 0, Program, []),
     lists:append(lists:join(",",lists:map(fun erlang:integer_to_list/1, lists:reverse(OutputR)))).
 
 
