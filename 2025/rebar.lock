@@ -1,0 +1,4 @@
+[{<<"ja_erl_utils">>,
+  {git,"https://github.com/Juliusan/ja_erl_utils.git",
+       {ref,"228011f877544e7333d7f8ae2b95d33810c2c1dd"}},
+  0}].
