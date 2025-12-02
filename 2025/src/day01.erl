@@ -3,6 +3,9 @@
 
 % Užduotis nesunki, tik painiojo Erlanginiai modulis (`rem`) ir sveikoji dalis
 % (`div`): neigiamiem skaičiams jie neigiami. Tai truputį pakomplikuoja kodą.
+% Vėliau betvarkydamas kodą prisiminiau, kad savo bibliotekoje turiu pasidaręs
+% euklidinius `rem` ir `div` variantus, tai panaudojau juos. Iš esmės niekas
+% nepasikeitė tik kodas tapo gal kiek aiškesnis.
 
 % (aoc_2025@JuliusErisataT14.erisata.lt)1> day01:solve_1("priv/day01-PVZ.txt").
 % 3
@@ -32,10 +35,10 @@ solve_1(FileName) ->
     Lines = read(FileName),
     %ja_erl_utils_terminal:print("~p", [Lines]),
     {Count, _LastPos} = ja_erl_utils_list:filter_count_foldl(fun({Direction, Number}, CurrPos) ->
-        NewPos = case Direction of
-            right -> (CurrPos + Number) rem 100;
-            left  -> ((CurrPos - Number) rem 100 + 100) rem 100
-        end,
+        NewPos = ja_erl_utils_int:euclidean_rem(case Direction of
+            right -> CurrPos + Number;
+            left  -> CurrPos - Number
+        end, 100),
         %ja_erl_utils_terminal:print("~p + ~p-~p -> ~p", [CurrPos, Direction, Number, NewPos]),
         case NewPos of
             0 -> {true, NewPos};
@@ -47,16 +50,18 @@ solve_1(FileName) ->
 solve_2(FileName) ->
     Lines = read(FileName),
     {Count, _LastPos} = ja_erl_utils_list:map_sum_foldl(fun({Direction, Number}, CurrPos) ->
-        NewPos = case Direction of
-            right -> (CurrPos + Number) rem 100;
-            left  -> ((CurrPos - Number) rem 100 + 100) rem 100
+        ResultPos = case Direction of
+            right -> CurrPos + Number;
+            left  -> CurrPos - Number
         end,
-        Clicks = case {Direction, CurrPos > Number} of
-            {right, _   } -> (CurrPos + Number) div 100;
-            {left,  true} -> 0;
-            {left, false} -> -((CurrPos - Number) div 100) + case CurrPos of 0 -> 0; _ -> 1 end
+        NewPos = ja_erl_utils_int:euclidean_rem(ResultPos, 100),
+        Clicks = abs(ja_erl_utils_int:euclidean_div(ResultPos, 100)),
+        Correction = case {Direction, CurrPos, NewPos} of
+            {left, 0, _} -> -1;
+            {left, _, 0} -> 1;
+            {_,    _, _} -> 0
         end,
         %ja_erl_utils_terminal:print("~p + ~p-~p -> ~p -> ~p", [CurrPos, Direction, Number, Clicks, NewPos]),
-        {Clicks, NewPos}
+        {Clicks + Correction, NewPos}
     end, 50, Lines),
     Count.
