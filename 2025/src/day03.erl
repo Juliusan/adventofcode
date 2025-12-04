@@ -20,29 +20,6 @@
 % {5484,169709990062889}
 
 
-read(FileName) ->
-    ja_erl_utils_file:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
-        lists:map(fun(Char) -> Char - $0 end, Line)
-    end).
-
-
-generate_init_on(Index, OnIndex, On, _RemBank, MaxIndex) when OnIndex >= MaxIndex ->
-    On;
-
-generate_init_on(Index, OnIndex, On, [Battery|RemBank], MaxIndex) ->
-    generate_init_on(Index+1, OnIndex+1, On#{OnIndex => {Index, Battery}}, RemBank, MaxIndex).
-
-
-place_batteries([], Index, AccOn, _BatteriesOnInBank, Index) ->
-    AccOn;
-place_batteries([Battery|RemBank], Index, AccOn, BatteriesOnInBank, BankSize) ->
-    FromIndex = erlang:max(0, BatteriesOnInBank + Index - BankSize),
-    NewAccOn = place_battery(Battery, RemBank, Index, FromIndex, AccOn, BatteriesOnInBank),
-    %ja_erl_utils_terminal:print("\t~p -> ~p [~p] -> ~p", [on_to_int(AccOn, BatteriesOnInBank), Battery, Index, on_to_int(NewAccOn, BatteriesOnInBank)]),
-    %ja_erl_utils_terminal:print("\t~p -> ~p [~p] -> ~p", [AccOn, Battery, Index, NewAccOn]),
-    place_batteries(RemBank, Index+1, NewAccOn, BatteriesOnInBank, BankSize).
-
-
 on_to_int(On, BatteriesOnInBank) ->
     lists:foldl(fun(Index, AccInt) ->
         {_Index, Battery} = maps:get(Index, On),
@@ -50,50 +27,54 @@ on_to_int(On, BatteriesOnInBank) ->
     end, 0, lists:seq(0, BatteriesOnInBank-1)).
 
 
-place_battery(_Battery, _RemBank, _Index, OnIndex, On, BatteriesOnInBank) when OnIndex >= BatteriesOnInBank ->
-    On;
+solve(FileName, BatteriesOnInBank) ->
+    Banks = ja_erl_utils_file:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
+        lists:map(fun(Char) -> Char - $0 end, Line)
+    end),
+    %ja_erl_utils_terminal:print("~p", [Banks]),
+    GenerateOnFun = fun(InitIndex, InitOnIndex, InitOn, InitRemBank) ->
+        {_, _, On} = lists:foldl(fun(OnIndex, {Index, RemBank, AccOn}) ->
+            [Battery|NewRemBank] = RemBank,
+            {Index+1, NewRemBank, AccOn#{OnIndex => {Index, Battery}}}
+        end, {InitIndex, InitRemBank, InitOn}, lists:seq(InitOnIndex, BatteriesOnInBank-1)),
+        On
+    end,
+    ja_erl_utils_list:map_sum(fun(Bank) ->
+        %ja_erl_utils_terminal:print("~p", [GenerateOnFun(0, #{}, Bank)]),
+        BankSize = erlang:length(Bank),
+        {BankSize, undefined, On} = lists:foldl(fun(Battery, {Index, RemBank, AccOn}) ->
+            FromIndex = erlang:max(0, BatteriesOnInBank + Index - BankSize),
+            PlaceBatteryFun = fun
+                PlaceBatteryFun(OnIndex) when OnIndex >= BatteriesOnInBank ->
+                    AccOn;
+                PlaceBatteryFun(OnIndex) ->
+                    case maps:get(OnIndex, AccOn) of
+                        {I, _} when I =:= Index ->
+                            AccOn;
+                        {I, AccBattery} when I < Index, Battery > AccBattery ->
+                            GenerateOnFun(Index+1, OnIndex+1, AccOn#{OnIndex => {Index, Battery}}, RemBank);
+                        {_, _} ->
+                            PlaceBatteryFun(OnIndex+1)
+                    end
+            end,
+            NewAccOn = PlaceBatteryFun(FromIndex),
+            %ja_erl_utils_terminal:print("\t~p -> ~p [~p] -> ~p", [on_to_int(AccOn, BatteriesOnInBank), Battery, Index, on_to_int(NewAccOn, BatteriesOnInBank)]),
+            %ja_erl_utils_terminal:print("\t~p -> ~p [~p] -> ~p", [AccOn, Battery, Index, NewAccOn]),
+            NewRemBank = case RemBank of
+                []             -> undefined;
+                [_|RemRemBank] -> RemRemBank
+            end,
+            {Index+1, NewRemBank, NewAccOn}
+        end, {0, erlang:tl(Bank), GenerateOnFun(0, 0, #{}, Bank)}, Bank),
+        %ja_erl_utils_terminal:print("~p", [On]),
+        Int = on_to_int(On, BatteriesOnInBank),
+        %ja_erl_utils_terminal:print("~p", [Int]),
+        Int
+    end, Banks).
 
-place_battery(Battery, RemBank, Index, OnIndex, On, BatteriesOnInBank) ->
-    case maps:get(OnIndex, On) of
-        {I, _} when I =:= Index ->
-            On;
-        {I, AccBattery} when I < Index, Battery > AccBattery ->
-            generate_init_on(Index+1, OnIndex+1, On#{OnIndex => {Index, Battery}}, RemBank, BatteriesOnInBank);
-        {_, _} ->
-            place_battery(Battery, RemBank, Index, OnIndex+1, On, BatteriesOnInBank)
-    end.
 
 solve_1(FileName) ->
-    Banks = read(FileName),
-    %ja_erl_utils_terminal:print("~p", [Banks]),
-    BatteriesOnInBank = 2,
-    ja_erl_utils_list:map_sum(fun(Bank) ->
-        %ja_erl_utils_terminal:print("~p", [generate_init_on(0, #{}, Bank, BatteriesOnInBank)]),
-        BankSize = erlang:length(Bank),
-        On = place_batteries(Bank, 0, generate_init_on(0, 0, #{}, Bank, BatteriesOnInBank), BatteriesOnInBank, BankSize),
-        %ja_erl_utils_terminal:print("~p", [On]),
-        Int = lists:foldl(fun(Index, AccInt) ->
-            {_Index, Battery} = maps:get(Index, On),
-            AccInt * 10 + Battery
-        end, 0, lists:seq(0, BatteriesOnInBank-1)),
-        %ja_erl_utils_terminal:print("~p", [Int]),
-        Int
-    end, Banks).
-
+    solve(FileName, 2).
 
 solve_2(FileName) ->
-    Banks = read(FileName),
-    %ja_erl_utils_terminal:print("~p", [Banks]),
-    BatteriesOnInBank = 12,
-    ja_erl_utils_list:map_sum(fun(Bank) ->
-        %ja_erl_utils_terminal:print("~p", [generate_init_on(0, #{}, Bank, BatteriesOnInBank)]),
-        BankSize = erlang:length(Bank),
-        On = place_batteries(Bank, 0, generate_init_on(0, 0, #{}, Bank, BatteriesOnInBank), BatteriesOnInBank, BankSize),
-        %ja_erl_utils_terminal:print("~p", [On]),
-        Int = lists:foldl(fun(Index, AccInt) ->
-            {_Index, Battery} = maps:get(Index, On),
-            AccInt * 10 + Battery
-        end, 0, lists:seq(0, BatteriesOnInBank-1)),
-        %ja_erl_utils_terminal:print("~p", [Int]),
-        Int
-    end, Banks).
+    solve(FileName, 12).
