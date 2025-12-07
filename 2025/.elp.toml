@@ -1,0 +1,13 @@
+project_name = "aoc_2025"
+
+[build_info]
+file = ".elp.build_info.json"
+# apps = "."
+# deps = "_build/default/lib/*"
+
+[eqwalizer]
+enabled_all = false
+ignore_modules = ["day07"]
+
+[rebar]
+profile = "default"

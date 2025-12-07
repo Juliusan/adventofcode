@@ -36,12 +36,9 @@ read(FileName) ->
 
 
 remove_rolls(RollIndexes, Matrix) ->
-    {RollsRemoved, RollsRemaining} = lists:foldl(fun({Row, Column} = RollIndex, {AccRemoved, AccRemaining}) ->
-        Indexes = [ {Row+R, Column+C} || R <- [-1, 0, 1], C <- [-1, 0, 1]] -- [{Row, Column}],
-        ValidIndexes = lists:filter(fun(Index) ->
-            ja_erl_utils_matrix:is_valid_index(Index, Matrix)
-        end, Indexes),
-        case erlang:length(Indexes) of
+    {RollsRemoved, RollsRemaining} = lists:foldl(fun(RollIndex, {AccRemoved, AccRemaining}) ->
+        ValidIndexes = utils:ja_erl_utils_matrix_get_neighbor_indices(RollIndex, Matrix),
+        case erlang:length(ValidIndexes) of
             L when L <  4 ->
                 {[RollIndex|AccRemoved], AccRemaining};
             L when L =< 8 ->

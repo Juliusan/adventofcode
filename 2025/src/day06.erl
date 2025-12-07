@@ -32,8 +32,8 @@ solve_1(FileName) ->
     ja_erl_utils_list:map_sum(fun(Problem) ->
         [Action | Numbers] = Problem,
         case Action of
-            "+" -> ja_erl_utils_list:map_sum(fun(Number) -> erlang:list_to_integer(Number) end, Numbers);
-            "*" -> lists:foldl(fun(Number, Acc) -> erlang:list_to_integer(Number)*Acc end, 1, Numbers)
+            "+" -> ja_erl_utils_list:map_sum(fun erlang:list_to_integer/1, Numbers);
+            "*" -> utils:ja_erl_utils_list_map_multiply(fun erlang:list_to_integer/1, Numbers)
         end
     end, Problems).
 
@@ -60,7 +60,7 @@ solve_2(FileName) ->
                 case Operation of
                     $  -> {0, [Number | AccNumbers]};
                     $+ -> {lists:sum([Number|AccNumbers]), []};
-                    $* -> {lists:foldl(fun(N, Acc) -> N*Acc end, 1, [Number|AccNumbers]), []}
+                    $* -> {utils:ja_erl_utils_list_multiply([Number|AccNumbers]), []}
                 end
         end
     end, [], Columns),
