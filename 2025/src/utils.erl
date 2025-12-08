@@ -2,6 +2,7 @@
 -export([
     ja_erl_utils_list_multiply/1,
     ja_erl_utils_list_map_multiply/2,
+    ja_erl_utils_list_take/2,
     ja_erl_utils_matrix_get/2,
     ja_erl_utils_matrix_get_indices/3,
     ja_erl_utils_matrix_get_adjacent_indices/2,
@@ -17,6 +18,20 @@ ja_erl_utils_list_multiply(List) ->
 
 ja_erl_utils_list_map_multiply(MapFun, List) ->
     lists:foldl(fun(Elem, Acc) -> MapFun(Elem)*Acc end, 1, List).
+
+
+ja_erl_utils_list_take(Fun, List) ->
+    case ja_erl_utils_list_take(Fun, List, []) of
+        undefined -> {undefined, List};
+        Result    -> Result
+    end.
+
+ja_erl_utils_list_take(_Fun, [], _AccList) -> undefined;
+ja_erl_utils_list_take( Fun, [Elem|RemList], AccList) ->
+    case Fun(Elem) of
+        true  -> {Elem, lists:reverse(AccList) ++ RemList};
+        false -> ja_erl_utils_list_take(Fun, RemList, [Elem|AccList])
+    end.
 
 
 ja_erl_utils_matrix_get(Indices, Matrix) ->

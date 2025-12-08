@@ -28,97 +28,64 @@ distance(Box1, Box2) ->
     math:pow(X2-X1, 2) + math:pow(Y2-Y1, 2) + math:pow(Z2-Z1, 2).
 
 
-take(Elem, List) ->
-    case take(Elem, List, []) of
-        undefined -> {undefined, List};
-        Result    -> Result
-    end.
-
-take(_Fun, [], _AccList) -> undefined;
-take( Fun, [ Elem|RemList], AccList) ->
-    case Fun(Elem) of
-        true  -> {Elem, lists:reverse(AccList) ++ RemList};
-        false -> take(Fun, RemList, [Elem|AccList])
-    end.
-
-
-solve_1(FileName, BoxPairsToConnect) ->
+read(FileName) ->
     Boxes = ja_erl_utils_file:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
         ja_erl_utils_string:get_integer_list(Line, ",")
     end),
     %ja_erl_utils_terminal:print("~p", [Boxes]),
-    BoxDistances = ja_erl_utils_list:foldl_pairs(fun(Box1, Box2, AccBoxDistances) ->
-        Distance = distance(Box1, Box2),
-        [{Distance, Box1, Box2}|AccBoxDistances]
-    end, [], Boxes),
-    BoxDistancesSorted = lists:sublist(lists:sort(BoxDistances), BoxPairsToConnect),
-    %ja_erl_utils_terminal:print("~p", [BoxDistancesSorted]),
-    BoxGroups = lists:foldl(fun({_, Box1, Box2}, AccGroups) ->
-        BoxInGroupFunFun = fun(Box) ->
-            fun(Group) -> lists:member(Box, Group) end
-        end,
-        case take(BoxInGroupFunFun(Box1), AccGroups) of
-            {undefined, AccGroups} ->
-                case take(BoxInGroupFunFun(Box2), AccGroups) of
-                    {undefined, RemAccGroups2} -> [[Box1, Box2]|RemAccGroups2];
-                    {Group,     RemAccGroups2} -> [[Box1|Group]|RemAccGroups2]
-                end;
-            {Group1, RemAccGroups1} ->
-                BoxInGroup2Fun = BoxInGroupFunFun(Box2),
-                case BoxInGroup2Fun(Group1) of
-                    true ->
-                        [Group1|RemAccGroups1];
-                    false ->
-                        case take(BoxInGroupFunFun(Box2), RemAccGroups1) of
-                            {undefined, RemAccGroups2} -> [[Box2|Group1]|RemAccGroups2];
-                            {Group2,    RemAccGroups2} -> [Group1++Group2|RemAccGroups2]
-                        end
-                end
-        end
-    end, [], BoxDistancesSorted),
-    [L1, L2, L3|_] = lists:reverse(lists:sort(lists:map(fun(Group) -> erlang:length(Group) end, BoxGroups))),
-    L1*L2*L3.
-
-
-solve_2(FileName) ->
-    Boxes = ja_erl_utils_file:read_lines_no_new_line_to_elems(FileName, fun(Line) ->
-        ja_erl_utils_string:get_integer_list(Line, ",")
-    end),
-    %ja_erl_utils_terminal:print("~p", [Boxes]),
-    BoxesCount = erlang:length(Boxes),
     BoxDistances = ja_erl_utils_list:foldl_pairs(fun(Box1, Box2, AccBoxDistances) ->
         Distance = distance(Box1, Box2),
         [{Distance, Box1, Box2}|AccBoxDistances]
     end, [], Boxes),
     BoxDistancesSorted = lists:sort(BoxDistances),
     %ja_erl_utils_terminal:print("~p", [BoxDistancesSorted]),
-    GroupBoxesFun = fun GroupBoxesFun([{_, Box1, Box2}|RemPairs], AccGroups) ->
-        BoxInGroupFunFun = fun(Box) ->
-            fun(Group) -> lists:member(Box, Group) end
-        end,
-        NewAccGroups = case take(BoxInGroupFunFun(Box1), AccGroups) of
-            {undefined, AccGroups} ->
-                case take(BoxInGroupFunFun(Box2), AccGroups) of
-                    {undefined,  RemAccGroups2} -> [[Box1, Box2]|RemAccGroups2];
-                    {Group2,     RemAccGroups2} -> [[Box1|Group2]|RemAccGroups2]
-                end;
-            {Group1, RemAccGroups1} ->
-                BoxInGroup2Fun = BoxInGroupFunFun(Box2),
-                case BoxInGroup2Fun(Group1) of
-                    true ->
-                        [Group1|RemAccGroups1];
-                    false ->
-                        case take(BoxInGroupFunFun(Box2), RemAccGroups1) of
-                            {undefined, RemAccGroups2} -> [[Box2|Group1]|RemAccGroups2];
-                            {Group2,    RemAccGroups2} -> [Group1++Group2|RemAccGroups2]
-                        end
-                end
-        end,
-        %ja_erl_utils_terminal:print("~p", [NewAccGroups]),
-        case NewAccGroups of
-            [Group] when erlang:length(Group) =:= BoxesCount -> {Box1, Box2};
-            _                                                       -> GroupBoxesFun(RemPairs, NewAccGroups)
-        end
+    {Boxes, BoxDistancesSorted}.
+
+
+group_boxes(Pairs, EndFun) ->
+    group_boxes(Pairs, [], EndFun).
+
+group_boxes([{_, Box1, Box2}|RemPairs], AccGroups, EndFun) ->
+    NewAccGroups = case utils:ja_erl_utils_list_take(fun(Group) -> lists:member(Box1, Group) end, AccGroups) of
+        {undefined, AccGroups} ->
+            case utils:ja_erl_utils_list_take(fun(Group) -> lists:member(Box2, Group) end, AccGroups) of
+                {undefined,  RemAccGroups2} -> [[Box1, Box2]|RemAccGroups2];
+                {Group2,     RemAccGroups2} -> [[Box1|Group2]|RemAccGroups2]
+            end;
+        {Group1, RemAccGroups1} ->
+            case lists:member(Box2, Group1) of
+                true ->
+                    [Group1|RemAccGroups1];
+                false ->
+                    case utils:ja_erl_utils_list_take(fun(Group) -> lists:member(Box2, Group) end, RemAccGroups1) of
+                        {undefined, RemAccGroups2} -> [[Box2|Group1]|RemAccGroups2];
+                        {Group2,    RemAccGroups2} -> [Group1++Group2|RemAccGroups2]
+                    end
+            end
     end,
-    {[X1,_,_],[X2,_,_]} = GroupBoxesFun(BoxDistancesSorted, []),
+    %ja_erl_utils_terminal:print("~p", [NewAccGroups]),
+    case EndFun(NewAccGroups, RemPairs) of
+        true  -> {{Box1, Box2}, NewAccGroups};
+        _     -> group_boxes(RemPairs, NewAccGroups, EndFun)
+    end.
+
+
+solve_1(FileName, BoxPairsToConnect) ->
+    {_, BoxDistancesAll} = read(FileName),
+    BoxDistances = lists:sublist(BoxDistancesAll, BoxPairsToConnect),
+    {_, BoxGroups} = group_boxes(BoxDistances, fun
+        (_, []   ) -> true;
+        (_, [_|_]) -> false
+    end),
+    [L1, L2, L3|_] = lists:reverse(lists:sort(lists:map(fun(Group) -> erlang:length(Group) end, BoxGroups))),
+    L1*L2*L3.
+
+
+solve_2(FileName) ->
+    {Boxes, BoxDistances} = read(FileName),
+    BoxesCount = erlang:length(Boxes),
+    {{[X1,_,_],[X2,_,_]}, _BoxGroups} = group_boxes(BoxDistances, fun
+        ([Group], _) -> erlang:length(Group) =:= BoxesCount;
+        ([_|_],   _) -> false
+    end),
     X1*X2.
