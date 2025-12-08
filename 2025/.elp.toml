@@ -7,7 +7,10 @@ file = ".elp.build_info.json"
 
 [eqwalizer]
 enabled_all = false
-ignore_modules = ["day07"]
+ignore_modules = [
+    "day07",
+    "day08"
+]
 
 [rebar]
 profile = "default"
